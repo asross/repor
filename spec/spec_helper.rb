@@ -7,6 +7,7 @@ require "rails/test_help"
 
 require 'rspec/rails'
 require 'factory_girl_rails'
+require 'pry'
 
 # Load support files
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
