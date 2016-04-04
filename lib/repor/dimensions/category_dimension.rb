@@ -22,7 +22,7 @@ module Repor
       end
 
       def all_values
-        report.relation.pluck("DISTINCT #{expression}")
+        relate(report.base_relation).pluck("DISTINCT #{expression}")
       end
     end
   end
