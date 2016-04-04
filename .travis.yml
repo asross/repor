@@ -1,0 +1,10 @@
+script:
+  - cd spec/dummy && RAILS_ENV=test bundle exec rake db:create db:schema:load && cd ../..
+  - bundle exec rspec
+language: ruby
+rvm:
+  - 2.2
+env:
+  - DB=mysql
+  - DB=postgres
+  - DB=sqlite
