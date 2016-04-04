@@ -1,257 +1,411 @@
 # Repor
 
-`repor` is a DSL for aggregating data about Rails models. It's designed to be flexible enough to accomodate many use cases, but opinionated enough to avoid boilerplate.
+`repor` is a framework for aggregating data about
+[Rails](http://rubyonrails.org) models backed by
+[PostgreSQL](http://www.postgresql.org), [MySQL](https://www.mysql.com), or
+[SQLite](https://www.sqlite.org) databases.  It's designed to be flexible
+enough to accommodate many use cases, but opinionated enough to avoid the need
+for boilerplate.
 
-## Basic Usage
+## Basic usage
 
-Here's an example of how to write and use a `Repor::Report`:
+Here are some examples of how to define, run, and serialize a `Repor::Report`:
 
 ```ruby
 class PostReport < Repor::Report
-  enum_dimension :author, relation: ->(r) { r.joins(:author) }, expression: 'users.name'
-  time_dimension :created_at
-  hist_dimension :likes
+  report_on :Post
 
-  aggregator :count, ->(r) { r.count }
-  aggregator :total_likes, ->(r) { r.sum('posts.likes') }
+  category_dimension :author, relation: ->(r) { r.joins(:author) },
+    expression: 'users.name'
+  number_dimension :likes
+  time_dimension :created_at
+
+  count_aggregator :number_of_posts
+  sum_aggregator :total_likes, expression: 'posts.likes'
+  array_aggregator :post_ids, expression: 'posts.id'
 end
 
-# show me counts of all posts from 2014-2015 with at least 4 likes by author
+# show me # published posts from 2014-2015 with at least 4 likes, by author
 
-puts PostReport.new(
+report = PostReport.new(
   relation: Post.published,
-  min_likes: 4,
-  min_created_at: '2014',
-  max_created_at: '2015',
-  x_axis: 'author',
-  y_axis: 'count'
-).formatted_data
+  groupers: [:author],
+  aggregator: :number_of_posts,
+  dimensions: {
+    likes: {
+      only: { min: 4 }
+    },
+    created_at: {
+      only: { min: '2014', max: '2015' }
+    }
+  }
+)
 
-# => { 'Mark Zuckerberg' => 10, 'Jane Kraczinsky' => 4, 'Bayard Rustin' => 5 }
+puts report.data
+
+# => [
+#  { key: 'James Joyce', value: 10 },
+#  { key: 'Margaret Atwood', value: 4 }
+#  { key: 'Toni Morrison', value: 5 }
+# ]
 
 # show me likes on specific authors' posts by author and year, from 1985-1987
 
-puts PostReport.new(
-  author_values: ['Toni Morrison', 'James Joyce', 'Margaret Atwood'],
-  x_axes: ['author', 'created_at'],
-  y_axis: 'total_likes',
-  created_at_time_step: 'year',
-  min_created_at: '1985',
-  max_created_at: '1987'
-).formatted_data
+report = PostReport.new(
+  groupers: [:author, :created_at],
+  aggregator: :total_likes,
+  dimensions: {
+    created_at: {
+      only: { min: '1985', max: '1987' },
+      bin_width: 'year'
+    },
+    author: {
+      only: ['Edith Wharton', 'James Baldwin']
+    }
+  }
+)
 
-# => {
-#  ['Toni Morrison', '1985'] => 3,  ['James Joyce', '1985'] => 3, ['Margaret Atwood', '1985'] => 15,
-#  ['Toni Morrison', '1986'] => 4,  ['James Joyce', '1986'] => 0, ['Margaret Atwood', '1986'] => 10,
-#  ['Toni Morrison', '1987'] => 19, ['James Joyce', '1987'] => 1, ['Margaret Atwood', '1987'] => 6
-# }
+puts report.data
+
+# => [{
+#   key: { min: Tue, 01 Jan 1985 00:00:00 UTC +00:00,
+#          max: Wed, 01 Jan 1986 00:00:00 UTC +00:00 },
+#   values: [
+#     { key: 'Edith Wharton', value: 35 },
+#     { key: 'James Baldwin', value: 13 }
+#   ]
+# }, {
+#   key: { min: Wed, 01 Jan 1986 00:00:00 UTC +00:00,
+#          max: Thu, 01 Jan 1987 00:00:00 UTC +00:00 },
+#   values: [
+#     { key: 'Edith Wharton', value: 0 },
+#     { key: 'James Baldwin', value: 0 }
+#   ]
+# }, {
+#   key: { min: Thu, 01 Jan 1987 00:00:00 UTC +00:00,
+#          max: Fri, 01 Jan 1988 00:00:00 UTC +00:00 },
+#   values: [
+#     { key: 'Edith Wharton', value: 0 },
+#     { key: 'James Baldwin', value: 19 }
+#   ]
+# }]
+
+csv_serializer = Repor::Serializers::CsvSerializer.new(report)
+puts csv_serializer.csv_text
+
+# => csv text string
+
+chart_serializer = Repor::Serializers::HighchartsSerializer.new(report)
+puts chart_serializer.highcharts_options
+
+# => highcharts options hash
 ```
 
-To write a report class, you define dimensions and aggregators. Dimensions are your x-axes and aggregators are your y-axes. You can then use that report class by instantiating it with one `y_axis` and at least one `x_axis` and calling one of the data access methods. You can also wrap it in an exporter to get that data in CSV or highcharts form.
+To define a report, you declare dimensions (which represent attributes of your
+data) and aggregators (which represent quantities you want to measure). To
+run a report, you instantiate it with one aggregator and at least one dimension,
+then inspect its `data`. You can also wrap it in a serializer to get results in
+useful formats.
 
-## Initialization Options
+## Instantiating reports
 
-General options:
+Just call `ReportClass.new(params)`, where `params` is a hash with these keys:
 
-- `y_axis` picks which aggregator to use
-- `x_axis`, `x_axis2`, `x_axes` pick which dimension(s) to group by
-- `relation` provides an initial scope for the data (useful if you want to limit the report to records a user is authorized to see, without making that logic part of the report itself).
+- `aggregator` (required) is the name of the aggregator to aggregate by
+- `groupers` (required) is a list of the names of the dimension(s) to group by
+- `relation` (optional) provides an initial scope for the data
+- `dimensions` (optional) holds dimension-specific filter or grouping options
 
-Dimension-specific options:
+See below for more details about dimension-specific parameters.
 
-- Enumerated dimensions
-    * `#{dimension}_values` - pass in a single value or an array to filter to specific dimension values
-- Time dimensions
-    * `min_#{dimension}` - pass a time or parseable string to filter to all records at or after a particular time
-    * `max_#{dimension}` - filter to all records at or before a particular time
-    * `#{dimension}_time_step` - control whether time binning is by year, month, day, etc.
-- Numeric (histogram) dimensions
-    * `min_#{dimension}` - pass a number or a string parseable as one to filter to records with dimension >= that value
-    * `max_#{dimension}` - sets the maximum value
-    * `#{dimension}_bin_size`, `#{dimension}_bin_count` - control the size of the histogram binning
+## Defining reports (and passing dimension parameters)
 
-## Defining Axes
+### Base relation
 
-### Aggregators (y axes)
+A `Repor::Report` either needs to know what `ActiveRecord` class it is reporting
+on, or it needs to know a `table_name` and a `base_relation`.
 
-Add y-axis options by calling `aggregator` with the name of the axis and a `Proc` that will take a grouped `ActiveRecord::Relation` and return a hash of `[x_axis_values...] => scalar`. For example:
+You can specify an `ActiveRecord` class by calling the `report_on` class method
+with a class or class name, or if you prefer, you can override the other two as
+instance methods.
+
+By default, it will try to infer an `ActiveRecord` class from the report class
+name by dropping `/Report$/` and constantizing.
 
 ```ruby
 class PostReport < Repor::Report
-  aggregator :total_likes, ->(r) { r.sum('posts.likes') }
-  aggregator :all_likes, ->(r) { r.joins(:comments).sum('posts.likes + comments.likes') }
 end
-```
 
-### Dimensions (x axes/filters)
+PostReport.new.table_name
+# => 'posts'
 
-Add dimensions, which are both x-axis and filter options, by calling one of the dimension builder methods (`enum_dimension`, `time_dimension`, `hist_dimension`) with the name. You can optionally pass a `relation` proc and a SQL `expression`, and there are a few dimension-type specific options you can pass as well.
+PostReport.new.base_relation
+# => Post.all
 
-The dimension builder class methods will define several helper instance methods (plus additional methods specific to the dimension type):
-- `grouped_by_#{dimension}`
-- `filtered_by_#{dimension}`
-- `relation_for_#{dimension}`
-- `all_#{dimension}_values`
-- `sanitize_#{dimension}_value`
-- `format_#{dimension}_value`
+class PostStructuralReport < Repor::Report
+  report_on :Post
 
-All of these methods can be overridden once defined (with support for `super`).
-
-#### Enumerated Dimensions
-
-Enumerated dimensions are for reporting on expressions that can take on a set of possible values. For example, if you have a `Post` model with a `status` column and an `author` association, you might want to do something like the following:
-
-```ruby
-class PostReport < Repor::Report
-  aggregator :count, ->(r) { r.count }
-  enum_dimension :status
-  enum_dimension :author, relation: ->(r) { r.joins(:author) }, expression: 'users.name'
-end
-```
-
-Which would allow you to do:
-
-```ruby
-puts PostReport.new(x_axis: 'status').formatted_data
-
-# => { 'Draft' => 145, 'Published' => 453, 'Archived' => 73 }
-
-puts PostReport.new(x_axis: 'author').formatted_data
-
-# => { 'Alice Jones' => 35, 'Bob Jones' => 78, 'Chester Jones' => 12 }
-```
-
-To filter, you can pass `params[:status_values] = 'Draft'` to limit the report to posts for which `posts.status = 'Draft'`, and `params[:status_values] = ['Draft', 'Published']` to limit the report to posts for which `posts.status IN ('Draft', 'Published')`.
-
-#### Time Dimensions
-
-Time dimensions allow you to group your data by the year, month, week, day, or even the hour/minute/second of some timestamp.
-
-The time step can be passed in as an option when initializing the report, but if it's not, a sensible one will be inferred from the total period spanned by the data.
-
-For example, you might have
-
-```ruby
-class PostReport < Repor::Report
-  aggregator :count, ->(r) { r.count }
-  time_dimension :created_at
-end
-```
-
-Which might produce:
-
-```ruby
-puts PostReport.new(x_axis: 'created_at', y_axis: 'count').formatted_data
-
-# => { 'May 2015' => 124, 'Jun 2015' => 163, 'Jul 2015' => 122 }
-```
-
-If you wanted to report by week, you could pass in `params[:created_at_time_step] = 'week'`. If you wanted to change how the default time step is calculated (maybe to always return `'week'`), you could override `PostReport#default_created_at_time_step`.
-
-Time dimensions will return data ordered chronologically from the beginning to the end of the full time range, and will include entries without records for completeness.
-
-Defining a time dimension allows you to filter by the minimum and/or maximum time. If your dimension is called `created_at`, you can pass in any combination of `params[:min_created_at]` and `params[:max_created_at]`, which can be parseable strings, dates, or datetimes.
-
-#### Histogram Dimensions
-
-If you have some numeric value that you would like to report on, you can report on the distribution of its values using a histogram. E.g.:
-
-```ruby
-class PostReport < Repor::Report
-  aggregator :count, ->(r) { r.count }
-  hist_dimension :likes
-end
-```
-
-might output data of the form:
-
-```ruby
-puts PostReport.new(x_axis: 'likes', y_axis: 'count').formatted_data
-
-# => { 0 => 563, 5 => 231, 10 => 117, 15 => 32, 20 => 7 }
-```
-
-You can pass in the number of bins you would like or the size of each bin by passing `params[:likes_bin_size]` or `params[:likes_bin_count]`. It will default to picking a bin size that ensures 5 bins. You can also override `PostReport#default_likes_bin_size` or `#default_likes_bin_count`.
-
-Again as with time, we will return data ordered from least to greatest and include bins with no records. And you can filter by the histogram dimension by passing in, in this case, `params[:min_number_of_likes]` and `params[:max_number_of_likes]`.
-
-## Specifying a model
-
-`repor` needs to know which `ActiveRecord` model it's reporting on. You can specify it manually by using the `report_on` method:
-
-```ruby
-class WackyReport
-  report_on 'Post'
-end
-```
-
-If you don't specify a model, `repor` will attempt to infer it by taking the demodulized report class name and removing `/Report$/` (so `SomeModule::SomeClassReport` will be assumed to report on `SomeClass`).
-
-## Formatting
-
-By default, calling `.data` on a report will produce a hash of `{ [x_values...] => y_value }`. The x values for enumerated dimensions will be whatever comes out of the database. The x values for time and histogram dimensions will be `Range`s of times and floats, respectively.
-
-If you call `.formatted_data`, formatting is applied to all of these values to make them user-friendly (via overrideable methods):
-
-```ruby
-class PostReport < Repor::Report
-  def format_enum(value, dimension)
-    I18n.t("post_report.#{dimension}_values.#{value}")
-  end
-
-  def format_hist(range, dimension, bin_size)
-    "#{range.min} <= #{dimension} < #{range.max}"
-  end
-
-  def format_created_at_value(range, dimension, time_step)
-    "created during #{time_step} of #{range.min}"
+  def base_relation
+    super.where(author: 'Foucault')
   end
 end
+
+PostStructuralReport.new.table_name
+# => 'posts'
+
+PostStructuralReport.new.base_relation
+# => Post.where(author: 'Foucault')
 ```
 
-For enumerated dimensions, we just return the value as-is, but you might override that globally or dimension-by-dimension to, for example, call out to `I18n`. Override `format_#{dimension}_value` for dimension-specific formatting and `format_enum` for global enum formatting.
+Finally, you can also use `autoreport_on` if you'd like to automatically infer
+dimensions from your columns and associations. `autoreport_on` will try to map
+most columns to dimensions, and if the column in question is for a `belongs_to`
+association, will even try to join and report on the association's name:
+```
+class PostReport < Repor::Report
+  autoreport_on Post
+end
 
-For time dimensions, we try to format the time interval based on the time step, using a set of `strftime` options. Again, override `format_#{dimension}_value` or `format_time`.
+PostReport.new.dimensions.keys
+# => %i[:created_at, :updated_at, :likes, :title, :author]
 
-For histogram dimensions, we just return the minimum value. Can be overridden in the same manner.
+PostReport.new.dimensions[:author].expression
+# => 'users.name'
+```
 
-You can also format y axis values by passing a `formatter` option:
+Autoreport behavior can be customized by overriding certain methods; see the
+`Repor::Report` code for more information.
+
+### Dimensions (x-axes)
+
+You define dimensions on your `Repor::Report` to represent attributes of your
+data you're interested in. Dimensions objects can filter or group your relation
+by a SQL expression, and accept/return simple Ruby values of various types.
+
+There are several built-in types of dimensions:
+- `CategoryDimension`
+    - Groups/filters the relation by the discrete values of the `expression`
+- `NumberDimension`
+    - Groups/filters the relation by binning a continuous numeric `expression`
+- `TimeDimension`
+    - Like number dimensions, but the bins are increments of time
+
+You define dimensions in your report class like this:
 
 ```ruby
 class PostReport < Repor::Report
-  aggregator :average_likes, ->(r) { r.average('posts.likes') }, formatter: ->(v) { v.to_f.round(2) }
+  category_dimension :status
+  number_dimension :author_rating, expression: 'users.rating',
+    relation: ->(r) { r.joins(:author) }
+  time_dimension :publication_date, expression: 'posts.published_at'
 end
 ```
 
-The formatting logic in `repor` is not fully fleshed out yet, and it's likely we will move towards a solution that more cleanly separates the formatting logic from the underlying report logic (while keeping it easy to customize).
+The SQL expression a dimension uses defaults to:
+```ruby
+"#{report.table_name}.#{dimension.name}"
+```
 
-## Output
+but this can be overridden by passing an `expression` option. Additionally, if
+the filtering or grouping requires joins or other SQL operations, a custom
+`relation` proc can be passed, which will be called beforehand.
 
-### CSV
+#### Filtering by dimensions
 
-Use `Repor::Exporters::CSV.new(report).csv` to get a report's data as a CSV.
+All dimensions can be filtered to one or more values by passing in
+`params[:dimensions][<dimension name>][:only]`.
 
-### Highcharts
+`CategoryDimension#only` should be passed the exact values you'd like to filter
+to (or what will map to them after connection adapter quoting).
 
-Use `Repor::Exporters::Highcharts.new(report).highcharts_options` to get a report's data as options you can pass directly into highcharts to generate a graph. The filter parameters necessary to get data for only a specific point are embedded in that point's attributes, making it easy to implement features such as drilldown.
+`NumberDimension` and `TimeDimension` are "bin" dimensions, and their `only`s
+should be passed one or more bin ranges. Bin ranges should be hashes of at
+least one of `min` and `max`, or they should just be `nil` to explicitly select
+rows for which `expression` is null. Bin range filtering is `min`-inclusive but
+`max`-exclusive. For `NumberDimension`, the bin values should be numbers or
+strings of digits. For `TimeDimension`, the bin values should be dates/times or
+`Time.zone.parse`-able strings.
 
-You can extend this class to merge in additional highcharts options, either globally or for specific series/points (see [Highcharts docs](http://api.highcharts.com/highcharts#series<column>.data)):
+#### Grouping by dimensions
+
+To group by a dimension, pass its `name` to `params[:groupers]`.
+
+##### Bin dimension grouping parameters
+
+For bin dimensions (`NumberDimension` and `TimeDimension`), where the values
+being grouped by are ranges of numbers or times, you can specify additional
+options to control the width and distribution of those bins. In particular,
+you can pass values to:
+
+- `params[:dimensions][<name>][:bins]`,
+- `params[:dimensions][<name>][:bin_count]`, or
+- `params[:dimensions][<name>][:bin_width]`
+
+`bins` is the most general option; you can use it to divide the full domain of
+the data into non-uniform, overlapping, and even null bin ranges. It should be
+passed an array of the same min/max hashes or `nil` used in filtering.
+
+`bin_count` will divide the domain of the data into a fixed number of bins. It
+should be passed a positive integer.
+
+`bin_width` will tile the domain with bins of a fixed width. It should be
+passed a positive number for `NumberDimension`s and a "duration" for
+`TimeDimension`s. Durations can either be strings of a number followed by a time
+increment (minutes, hours, days, weeks, months, years), or they can be hashes
+suitable for use with
+[`ActiveSupport::TimeWithZone#advance`](http://apidock.com/rails/ActiveSupport/TimeWithZone/advance).
+E.g.:
+
+```
+params[:dimensions][<time dimension>][:bin_width] = '1 month'
+params[:dimensions][<time dimension>][:bin_width] = { months: 2, hours: 2 }
+```
+
+`NumberDimension`s will default to using 10 bins and `TimeDimension`s will
+default to using a sensical increment of time given the domain; you can
+customize this by overriding methods in those classes.
+
+Note that when you inspect `report.data` after grouping by a bin dimension, you
+will see the dimension values are actually `Repor::BinDimension::Bin` objects,
+which respond to `min`, `max`, and various json/Hash methods. These are meant
+to provide a common interface for the different types of bins (double-bounded,
+unbounded on one side, null) and handle mapping between SQL and Ruby
+representations of their values. You may find bin objects useful in working
+with report data, and they can also be customized.
+
+#### Customizing dimensions
+
+You can define custom dimension classes by inheriting from one of the existing
+ones:
+```ruby
+class CaseInsensitiveCategoryDimension < Repor::Dimensions::CategoryDimension
+  def order_expression
+    "UPPER(#{super})"
+  end
+end
+```
+
+You can then use it in the definition of a report class like this:
+```ruby
+class UserReport < Repor::Report
+  dimension :last_name, CaseInsensitiveCategoryDimension
+end
+```
+
+Common methods to override include `order_expression`, `sanitize`,
+`validate_params!`, `group_values`, and `default_bin_width`.
+
+Note that if you inherit directly from  `Repor::Dimensions::BaseDimension`, you
+will need to implement (at a minimum) `filter(relation)`, `group(relation)`, and
+`group_values`. See the base dimension class for more details.
+
+If you want custom behavior for bins, you can define `Bin` and `BinTable`
+classes nested inside your custom dimension classes (or override methods
+directly on `Repor::BinDimension::Bin(Table)`,
+`Repor::TimeDimension::Bin(Table)`, etc). See the relevant classes for more
+details.
+
+### Aggregators (y-axes)
+
+Aggregators take your groups and reduce them down to a single value. They
+represent the quantities you're looking to measure across your dimensions.
+
+There are several built-in types of aggregators:
+
+- `CountAggregator`
+    - counts the number of distinct records in each group
+- `SumAggregator`
+    - sums an `expression` over each distinct record in each group
+- `AvgAggregator`
+    - sum divided by count
+- `MinAggregator`
+    - finds the minimum value of `expression` in each group
+- `MaxAggregator`
+    - finds the maximum value of `expression` in each group
+- `ArrayAggregator`
+    - returns an array of `expression` values in each group (PostgreSQL only)
+    - useful if you want to drill down into the data behind an aggregation
+
+#### Customizing aggregators
+
+By default, the `expression` will default to the aggregator name, but you can
+achieve some level of customization by passing in `expression` or `relation`:
 
 ```ruby
-class CustomHighchartsExporter < Repor::Exporters::Highcharts
-  def point_options(x_values, y_value)
-    super.merge(colors_for(x_values, y_value))
-  end
+max_aggregator :max_likes, expression: 'posts.likes'
 
-  def highcharts_options
-    super.merge(subtitle: { text: "A great chart subtitle" })
+sum_aggregator :total_cost,
+  expression: 'invoices.hours_worked * invoices.hourly_rate'
+
+avg_aggregator :mean_author_age, expression: 'AGE(users.dob)',
+  relation: ->(r) { r.joins(:author) }
+```
+
+You can also define your own aggregator type if none of the existing ones meet
+your needs:
+
+```ruby
+class StandardDeviationAggregator < Repor::Aggregators::BaseAggregator
+  def aggregate(grouped_relation)
+    # check out the other aggregators for examples of what to do here.
   end
 end
+
+# then:
+aggregator :sigma_likes, StandardDeviationAggregator, expression: 'posts.likes'
 ```
+
+## Serializing a report object
+
+After defining and running a report, you can wrap it in a serializer to get its
+data in a more useful format.
+
+`TableSerializer` defines `caption`, `headers`, and `each_row`, which can be
+used to construct a table. It also wraps dimension and aggregator names and
+values in formatting methods, which can be overridden, e.g. if you would like to
+use I18n for date or enum column formatting. You can override these methods on
+`BaseSerializer` if you would like them to apply everywhere.
+
+`CsvSerializer` dumps the data from `TableSerializer` to a CSV string or file.
+
+`HighchartsSerializer` can map reports with 1-3 grouping dimensions to options
+for passing into the Highcharts charting library. Extra options included with
+the raw data makes it easy to implement features like detailed tooltips and
+drilldown.
+
+`FormFieldSerializer` represents report parameters as HTML form fields. Likely
+you will want to implement your own form logic specific to your report class
+and application design, but it provides an easy and somewhat extensible way to
+get up and running.
+
+See the serializer class files for more documentation.
 
 ## Contributing
 
-If you have suggestions for how to make any part of the codebase better, or if you want to contribute extra dimension types and/or exporters, please submit them as a pull request to this repository (with test coverage).
+If you have suggestions for how to make any part of this library better, or if
+you want to contribute extra dimensions, aggregators, serializers, please
+submit them in a pull request (with test coverage).
+
+To work on developing `repor`, you will need to have Ruby and PostgreSQL,
+MySQL, or SQLite3 installed. Then clone the repository and run:
+```sh
+bundle install
+cd spec/dummy
+DB=<your db type> bundle exec rake db:create db:schema:load db:test:prepare
+cd ../..
+DB=<your db type> bundle exec rspec
+```
+
+which will run the test suite. The options for `DB` are `sqlite`, `mysql`, and
+`postgres` (the default). Preferably you should run it against all three, but
+CI will also do so.
+
+To see the dummy application in development mode, you can run:
+```sh
+cd spec/dummy
+DB=<your db type> bundle exec rake db:setup
+DB=<your db type> bundle exec rails server
+```
 
 ## License
 

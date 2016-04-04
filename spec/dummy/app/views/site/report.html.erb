@@ -1,0 +1,71 @@
+<h1>Report Serializer Demo</h1>
+
+<div class='pure-g'>
+  <div class='pure-u-12-24'>
+    <h2>Form</h2>
+    <%= form_tag request.fullpath, method: 'get', id: 'report-form', autocomplete: 'off' do %>
+      <%= Repor::Serializers::FormFieldSerializer.new(@report).html_fields %><br>
+      <%= submit_tag 'Run report', class: 'pure-button pure-button-primary' %>
+    <% end %>
+
+    <h2>CSV</h2><br>
+    <%= link_to 'Download CSV', request.query_parameters.merge(format: 'csv'), class: 'pure-button pure-button-primary' %>
+  </div>
+
+  <div class='pure-u-12-24'>
+    <h2>Chart</h2>
+    <div id='report-chart'></div>
+  </div>
+</div>
+
+<% table = Repor::Serializers::TableSerializer.new(@report) %>
+<div class='pure-g'>
+  <div class='pure-u-24-24'>
+    <h2>Table</h2>
+
+    <table class='pure-table pure-table-striped'>
+      <caption><%= table.caption %></caption>
+      <thead>
+        <tr><% table.headers.each do |th| %><th><%= th %></th><% end %></tr>
+      </thead>
+      <tbody>
+        <% table.each_row do |row| %>
+          <tr><% row.each do |td| %><td><%= td %></td><% end %></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% chart = Repor::Serializers::HighchartsSerializer.new(@report) %>
+<script>
+$(function() {
+  /* most of the highcharts options come straight from the exporter */
+  window.chartOpts = <%= chart.highcharts_options.to_json.html_safe %>;
+
+  /* we merge in one additional option, which is the click event. we've set it up here
+     to implement a drilldown feature */
+  chartOpts.tooltip.formatter = function() {
+    return this.point.tooltip + '<br>(click to drill down)';
+  };
+
+  chartOpts.plotOptions.series.cursor = 'pointer';
+
+  chartOpts.plotOptions.series.events.click = function(event) {
+    Object.keys(event.point.filters).forEach(function(key) {
+      var value = event.point.filters[key];
+      if (value.min || value.max) {
+        $('#report-form [name$="['+key+'][only][min]').val(value.min);
+        $('#report-form [name$="['+key+'][only][max]').val(value.max);
+      } else {
+        $('#report-form [name$="['+key+'][only]').val(value);
+      }
+    });
+
+    $('#report-form').submit();
+  };
+
+  /* actually invoke highcharts */
+  $('#report-chart').highcharts(chartOpts);
+});
+</script>

@@ -13,18 +13,25 @@
 
 ActiveRecord::Schema.define(version: 20150714202319) do
 
+  create_table "authors", force: :cascade do |t|
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "name"
+  end
+
   create_table "comments", force: :cascade do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.string   "author"
+    t.integer  "post_id"
+    t.integer  "author_id"
     t.integer  "likes",      default: 0, null: false
-    t.integer  "post_id",                null: false
   end
 
   create_table "posts", force: :cascade do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "title"
+    t.integer  "author_id"
     t.integer  "likes",      default: 0, null: false
   end
 
