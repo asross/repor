@@ -55,10 +55,10 @@ $(function() {
     Object.keys(event.point.filters).forEach(function(key) {
       var value = event.point.filters[key];
       if (value.min || value.max) {
-        $('#report-form [name$="['+key+'][only][min]').val(value.min);
-        $('#report-form [name$="['+key+'][only][max]').val(value.max);
+        $('#report-form [name$="['+key+'][only][min]"]').val(value.min);
+        $('#report-form [name$="['+key+'][only][max]"]').val(value.max);
       } else {
-        $('#report-form [name$="['+key+'][only]').val(value);
+        $('#report-form [name$="['+key+'][only]"]').val(value);
       }
     });
 
