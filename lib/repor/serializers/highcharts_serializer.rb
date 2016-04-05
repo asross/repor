@@ -14,7 +14,7 @@ module Repor
             d3[:values].map { |d2| {
               stack: human_dimension_value_label(dim3, d3[:key]),
               name: human_dimension_value_label(dim2, d2[:key]),
-              (i == 0 ? :id : :linkedTo) => d3[:key],
+              (i == 0 ? :id : :linkedTo) => human_dimension_value_label(dim2, d2[:key]),
               color: color_for(dim2, d2[:key]),
               data: d2[:values].map { |d1| {
                 y: d1[:value].to_f,
