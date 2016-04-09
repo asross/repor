@@ -92,6 +92,12 @@ describe Repor::Serializers::HighchartsSerializer do
         expect(chart.series[2][:linkedTo]).to eq '[1.0, 2.0)'
         expect(chart.series[3][:linkedTo]).to eq '[2.0, 3.0)'
 
+        colors = chart.series.map { |s| s[:color] }
+        expect(colors.all?(&:present?)).to be true
+        expect(colors[0]).to eq colors[2]
+        expect(colors[1]).to eq colors[3]
+        expect(colors[0]).not_to eq colors[1]
+
         expect(y_values(chart.series[0])).to eq [0, 1]
 
         jan1 = Time.zone.parse('2016-01-01')

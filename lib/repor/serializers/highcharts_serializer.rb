@@ -1,9 +1,26 @@
 module Repor
   module Serializers
     class HighchartsSerializer < TableSerializer
+      def colors
+        ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9',
+         '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1']
+      end
+
+      def color_hash
+        # ensure we consistently assign the same color to the same dimension-
+        # value pair
+        @color_hash ||= Hash.new do |h, key|
+          color_cycle = colors.cycle
+          h[key] = Hash.new do |hh, value|
+            hh[value] = color_cycle.next
+          end
+        end
+      end
+
       def color_for(dimension, value)
         # override this if the values of a particular dimension can take on
         # meaningful colors
+        color_hash[dimension.name][value]
       end
 
       def series
@@ -98,6 +115,7 @@ module Repor
           chart: {
             type: 'column'
           },
+          colors: colors,
           title: {
             text: chart_title
           },
