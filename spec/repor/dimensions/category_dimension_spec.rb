@@ -57,4 +57,38 @@ describe Repor::Dimensions::CategoryDimension do
       expect(dimension.group_values).to eq %w(foo bar)
     end
   end
+
+  describe '#all_values' do
+    it 'returns all values for the dimension in the data (sanitized)' do
+      p1 = create(:post, author: 'Alice')
+      p2 = create(:post, author: 'Bob')
+      p3 = create(:post, author: nil)
+
+      dimension_class = Class.new(described_class) do
+        # Note: this is a bad example of sanitization. `sanitize` should return
+        # a value suitable for passing right back into the dimension for
+        # filtering. A real example of this might be an enum column, where
+        # integer values map to strings, and you have mapping both in and out,
+        # in which case you'd override both `filter_values` AND `sanitize`.
+        def sanitize(value)
+          if value.present?
+            "#{value}, Esq."
+          else
+            "No Author"
+          end
+        end
+      end
+
+      report = OpenStruct.new(params: {}, base_relation: Post)
+
+      dimension = dimension_class.new(:author, report, expression: 'authors.name', relation: ->(r) { r.joins(
+        "LEFT OUTER JOIN authors ON authors.id = posts.author_id") })
+
+      expect(dimension.all_values).to match_array [
+        'No Author',
+        'Bob, Esq.',
+        'Alice, Esq.'
+      ]
+    end
+  end
 end

@@ -22,7 +22,8 @@ module Repor
       end
 
       def all_values
-        relate(report.base_relation).pluck("DISTINCT #{expression}")
+        values = relate(report.base_relation).pluck("DISTINCT #{expression}")
+        values.map(&method(:sanitize))
       end
     end
   end
