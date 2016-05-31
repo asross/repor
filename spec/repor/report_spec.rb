@@ -79,6 +79,43 @@ describe Repor::Report do
     end
   end
 
+  describe '#params' do
+    it 'strips "" but preserves nil by default' do
+      post1 = create(:post, author: 'Phil')
+      post2 = create(:post, author: 'Phyllis')
+
+      report = report_class.new(dimensions: { author: { only: '' } })
+
+      expect(report.params).to be_blank
+      expect(report.dimensions[:author].filter_values).to be_blank
+      expect(report.records).to eq [post1, post2]
+
+      report = report_class.new(dimensions: { author: { only: [''] } })
+
+      expect(report.params).to be_blank
+      expect(report.dimensions[:author].filter_values).to be_blank
+      expect(report.records).to eq [post1, post2]
+
+      report = report_class.new(dimensions: { author: { only: ['', 'Phil'] } })
+
+      expect(report.params).to be_present
+      expect(report.dimensions[:author].filter_values).to eq ['Phil']
+      expect(report.records).to eq [post1]
+
+      report = report_class.new(strip_blanks: false, dimensions: { author: { only: '' } })
+
+      expect(report.params).to be_present
+      expect(report.dimensions[:author].filter_values).to eq ['']
+      expect(report.records).to eq []
+
+      report = report_class.new(dimensions: { author: { only: nil } })
+
+      expect(report.params).to be_present
+      expect(report.dimensions[:author].filter_values).to eq [nil]
+      expect(report.records).to eq []
+    end
+  end
+
   describe '#aggregators' do
     it 'is a curried hash' do
       expect(report_class.aggregators.keys).to eq [:count, :likes]

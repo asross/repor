@@ -5,7 +5,8 @@ module Repor
     attr_reader :params
 
     def initialize(params = {})
-      @params = params.deep_symbolize_keys
+      @params = params.deep_symbolize_keys.deep_dup
+      deep_strip_blanks(@params) unless @params[:strip_blanks] == false
       validate_params!
     end
 
@@ -237,6 +238,26 @@ module Repor
 
     private def default_grouper_names
       [dimensions.keys.first]
+    end
+
+    private def strippable_blank?(value)
+      case value
+      when String, Array, Hash then value.blank?
+      else false
+      end
+    end
+
+    private def deep_strip_blanks(hash, depth = 0)
+      raise "very deep hash or, more likely, internal error" if depth > 100
+      hash.delete_if do |key, value|
+        strippable_blank?(
+          case value
+          when Hash then deep_strip_blanks(value, depth + 1)
+          when Array then value.reject!(&method(:strippable_blank?))
+          else value
+          end
+        )
+      end
     end
   end
 end

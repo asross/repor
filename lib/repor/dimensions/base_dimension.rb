@@ -98,7 +98,9 @@ module Repor
       end
 
       def array_param(key)
-        params.key?(key) ? Array.wrap(params[key]) : []
+        return [] unless params.key?(key)
+        return [nil] if params[key].nil?
+        Array.wrap(params[key])
       end
     end
   end

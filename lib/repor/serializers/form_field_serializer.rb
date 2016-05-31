@@ -4,21 +4,6 @@ module Repor
       include ActionView::Helpers::FormTagHelper
       include ActionView::Helpers::FormOptionsHelper
 
-      def self.sanitize_params(hash)
-        deep_deblank(hash.deep_dup)
-      end
-
-      def self.deep_deblank(hash, depth = 0)
-        raise "very deep hash or, more likely, internal error" if depth > 100
-        hash.delete_if do |key, value|
-          case value
-          when Hash then deep_deblank(value, depth + 1)
-          when Array then value.select!(&:present?)
-          else value
-          end.blank?
-        end
-      end
-
       def html_fields
         "<div class='#{wrapper_class}'>
           #{axis_fields}
