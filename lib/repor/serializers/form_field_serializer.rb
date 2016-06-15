@@ -57,13 +57,15 @@ module Repor
       def category_dimension_field(dimension)
         options = [[nil, nil]]
         dimension.all_values.each do |value|
-          next if value.nil?
-          options << [human_dimension_value_label(dimension, value), value]
+          options << [
+            human_dimension_value_label(dimension, value),
+            value.nil?? 'null' : value
+          ]
         end
 
         fields_for(dimension) do
           select_tag("#{prefix_for(dimension)}[only]",
-            options_for_select(options, dimension.filter_values.first))
+            options_for_select(options, dimension.raw_filter_values.first))
         end
       end
 

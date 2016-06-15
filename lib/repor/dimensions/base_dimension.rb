@@ -37,12 +37,16 @@ module Repor
 
       # Given a single (hashified) row of the SQL result, return the Ruby
       # object representing this dimension's value
-      def extract_value(row)
-        sanitize(row[sql_value_name])
+      def extract_sql_value(row)
+        sanitize_sql_value(row[sql_value_name])
+      end
+
+      def raw_filter_values
+        array_param(:only).uniq
       end
 
       def filter_values
-        array_param(:only).uniq
+        raw_filter_values.map(&method(:sanitize_param_value))
       end
 
       # Return whether the report should filter by this dimension
@@ -89,8 +93,18 @@ module Repor
         "_repor_dimension_#{name}"
       end
 
-      def sanitize(raw_value)
-        raw_value
+      def sanitize_sql_value(value)
+        value
+      end
+
+      def sanitize_param_value(value)
+        if value == 'null'
+          nil
+        elsif value.is_a?(Hash)
+          value.map { |k, v| [k, sanitize_param_value(v)] }.to_h
+        else
+          value
+        end
       end
 
       def dimension_or_root_param(key)

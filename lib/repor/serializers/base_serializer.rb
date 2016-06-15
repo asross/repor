@@ -37,8 +37,12 @@ module Repor
         end
       end
 
+      def human_null_value_label(dimension)
+        "No #{human_dimension_label(dimension)}"
+      end
+
       def human_category_value_label(dimension, value)
-        value
+        value.nil?? human_null_value_label(dimension) : value
       end
 
       def human_number_value_label(dimension, value)
@@ -48,7 +52,9 @@ module Repor
           min, max = value.min, value.max
         end
         return "[#{min.round(2)}, #{max.round(2)})" if min && max
-        value
+        return "[#{min.round(2)},)" if min
+        return "[,#{max.round(2)})" if max
+        human_null_value_label(dimension)
       end
 
       def time_formats
@@ -66,7 +72,9 @@ module Repor
           end
           return "#{min} to #{max}"
         end
-        value
+        return "after #{min}" if min
+        return "before #{max}" if max
+        human_null_value_label(dimension)
       end
 
       def record_type

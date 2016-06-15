@@ -106,13 +106,13 @@ module Repor
         bin_class.from_hash(bin)
       end
 
-      def sanitize(sql_value)
-        bin_class.from_sql(sql_value)
+      def sanitize_sql_value(value)
+        bin_class.from_sql(value)
       end
 
       def autopopulate_bins
         iters = 0
-        bins = []
+        bins = [nil]
         bin_edge = self.bin_start
         return bins if bin_edge.blank? || max.blank?
         approx_count = (max - bin_edge)/(bin_width)

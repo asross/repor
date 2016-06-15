@@ -114,6 +114,14 @@ describe Repor::Report do
       expect(report.dimensions[:author].filter_values).to eq [nil]
       expect(report.records).to eq []
     end
+
+    it "accepts 'null' as a substitute for nil" do
+      report = report_class.new(dimensions: { author: { only: 'null' } })
+
+      expect(report.params).to be_present
+      expect(report.dimensions[:author].filter_values).to eq [nil]
+      expect(report.records).to eq []
+    end
   end
 
   describe '#aggregators' do

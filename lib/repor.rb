@@ -13,6 +13,10 @@ module Repor
   def self.numeric?(value)
     value.is_a?(Numeric) || value.is_a?(String) && value =~ /\A\d+(?:\.\d+)?\z/
   end
+
+  def self.nil_param_pattern
+    /\Anull\z/
+  end
 end
 
 require 'repor/invalid_params_error'

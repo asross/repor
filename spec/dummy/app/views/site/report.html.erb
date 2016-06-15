@@ -23,7 +23,7 @@
   <div class='pure-u-24-24'>
     <h2>Table</h2>
 
-    <table class='pure-table pure-table-striped'>
+    <table class='pure-table pure-table-striped' id='data-table'>
       <caption><%= table.caption %></caption>
       <thead>
         <tr><% table.headers.each do |th| %><th><%= th %></th><% end %></tr>
@@ -67,5 +67,7 @@ $(function() {
 
   /* actually invoke highcharts */
   $('#report-chart').highcharts(chartOpts);
+
+
 });
 </script>
