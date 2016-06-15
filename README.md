@@ -1,4 +1,4 @@
-# Repor [![Build Status](https://api.travis-ci.org/asross/repor.svg)](https://travis-ci.org/asross/repor)
+# Repor [![Build Status](https://api.travis-ci.org/asross/repor.svg?branch=master)](https://travis-ci.org/asross/repor)
 
 `repor` is a framework for aggregating data about
 [Rails](http://rubyonrails.org) models backed by
