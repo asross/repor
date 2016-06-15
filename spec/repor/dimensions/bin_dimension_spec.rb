@@ -48,6 +48,7 @@ describe Repor::Dimensions::BinDimension do
     it 'defaults to dividing the domain into bins of bin_width' do
       dimension = new_dimension(only: { min: 0, max: 3 })
       allow(dimension).to receive(:bin_width).and_return(1)
+      allow(dimension).to receive(:data_contains_nil?).and_return(false)
       expect(dimension.group_values).to eq [
         { min: 0, max: 1 },
         { min: 1, max: 2 },

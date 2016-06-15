@@ -33,7 +33,7 @@ module Repor
       end
 
       def x_value_of(row)
-        report.groupers.map { |g| g.extract_value(row) }
+        report.groupers.map { |g| g.extract_sql_value(row) }
       end
 
       def y_value_of(row)

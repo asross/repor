@@ -37,8 +37,8 @@ module Repor
 
       # Given a single (hashified) row of the SQL result, return the Ruby
       # object representing this dimension's value
-      def extract_value(row)
-        sanitize(row[sql_value_name])
+      def extract_sql_value(row)
+        sanitize_sql_value(row[sql_value_name])
       end
 
       def filter_values
@@ -62,13 +62,23 @@ module Repor
         relation.order("#{order_expression} #{sort_order} #{null_order}")
       end
 
+      def sort_desc?
+        dimension_or_root_param(:sort_desc)
+      end
+
       def sort_order
-        dimension_or_root_param(:sort_desc) ? 'DESC' : 'ASC'
+        sort_desc?? 'DESC' : 'ASC'
+      end
+
+      def nulls_last?
+        value = dimension_or_root_param(:nulls_last)
+        value = !value if sort_desc?
+        value
       end
 
       def null_order
         return unless Repor.database_type == :postgres
-        dimension_or_root_param(:nulls_last) ? 'NULLS LAST' : 'NULLS FIRST'
+        nulls_last?? 'NULLS LAST' : 'NULLS FIRST'
       end
 
       def params
@@ -89,8 +99,8 @@ module Repor
         "_repor_dimension_#{name}"
       end
 
-      def sanitize(raw_value)
-        raw_value
+      def sanitize_sql_value(value)
+        value
       end
 
       def dimension_or_root_param(key)
