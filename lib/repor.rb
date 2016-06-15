@@ -14,8 +14,8 @@ module Repor
     value.is_a?(Numeric) || value.is_a?(String) && value =~ /\A\d+(?:\.\d+)?\z/
   end
 
-  def self.nil_param_pattern
-    /\Anull\z/
+  def self.null_proxy
+    'null'
   end
 end
 

@@ -79,8 +79,7 @@ module Repor
         def self.from_hash(h)
           # Returns either a bin or nil, depending on whether
           # the input is valid.
-          return new(nil, nil) if h.nil?
-          return new(nil, nil) if h.is_a?(String) && h =~ Repor.nil_param_pattern
+          return new(nil, nil) if h.nil? || h == Repor.null_proxy
           return unless h.is_a?(Hash)
           min, max = h.symbolize_keys.values_at(:min, :max)
           return if min.blank? && max.blank?

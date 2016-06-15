@@ -13,6 +13,10 @@ module Repor
         @max ||= filter_max || report.records.maximum(expression)
       end
 
+      def data_contains_nil?
+        report.records.where("#{expression} IS NULL").exists?
+      end
+
       def filter_min
         filter_values_for(:min).min
       end
@@ -111,8 +115,9 @@ module Repor
       end
 
       def autopopulate_bins
+        # Internal representation -- hashes and nil
         iters = 0
-        bins = [nil]
+        bins = []
         bin_edge = self.bin_start
         return bins if bin_edge.blank? || max.blank?
         approx_count = (max - bin_edge)/(bin_width)
@@ -128,6 +133,14 @@ module Repor
           bin_edge = bin[:max]
           iters += 1
           raise "too many bins, likely an internal error" if iters > max_bins
+        end
+
+        if data_contains_nil?
+          if dimension_or_root_param(:nulls_last)
+            bins << nil
+          else
+            bins = [nil] + bins
+          end
         end
 
         bins

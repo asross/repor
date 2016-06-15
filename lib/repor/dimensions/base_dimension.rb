@@ -98,7 +98,7 @@ module Repor
       end
 
       def sanitize_param_value(value)
-        if value == 'null'
+        if value == Repor.null_proxy
           nil
         elsif value.is_a?(Hash)
           value.map { |k, v| [k, sanitize_param_value(v)] }.to_h
