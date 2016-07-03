@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    repor (0.0.5)
+    repor (0.1.0)
       rails (~> 4)
 
 GEM
