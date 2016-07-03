@@ -33,12 +33,33 @@ describe Repor::Dimensions::NumberDimension do
     it 'can divide the domain into :bin_count bins' do
       dimension = new_dimension(bin_count: 5, only: { min: 0, max: 5 })
       expect(dimension.bin_width).to eq 1
+      allow(dimension).to receive(:data_contains_nil?).and_return(false)
       expect(dimension.group_values).to eq [
         { min: 0, max: 1 },
         { min: 1, max: 2 },
         { min: 2, max: 3 },
         { min: 3, max: 4 },
         { min: 4, max: 5 }
+      ]
+    end
+
+    it 'can include nils if they are present in the data' do
+      dimension = new_dimension(bin_count: 3, only: { min: 0, max: 3 })
+      allow(dimension).to receive(:data_contains_nil?).and_return(true)
+      expect(dimension.group_values).to eq [
+        { min: nil, max: nil },
+        { min: 0, max: 1 },
+        { min: 1, max: 2 },
+        { min: 2, max: 3 }
+      ]
+
+      dimension = new_dimension(bin_count: 3, only: { min: 0, max: 3 }, nulls_last: true)
+      allow(dimension).to receive(:data_contains_nil?).and_return(true)
+      expect(dimension.group_values).to eq [
+        { min: 0, max: 1 },
+        { min: 1, max: 2 },
+        { min: 2, max: 3 },
+        { min: nil, max: nil }
       ]
     end
 

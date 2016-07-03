@@ -44,6 +44,7 @@ describe Repor::Dimensions::TimeDimension do
 
     it 'can divide the domain into :bin_count bins' do
       dimension = new_dimension(bin_count: 10, only: [{ min: '2015-01-01' }, { max: '2015-01-11' }])
+      allow(dimension).to receive(:data_contains_nil?).and_return(false)
       expect(dimension.bin_width).to eq 1.day
       expect(dimension.group_values.map(&:min).map(&:day)).to eq (1..10).to_a
     end

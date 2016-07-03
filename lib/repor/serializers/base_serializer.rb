@@ -20,11 +20,17 @@ module Repor
         dimension.name.to_s.humanize
       end
 
+      def human_null_value_label(dimension)
+        "No #{human_dimension_label(dimension)}"
+      end
+
       def human_aggregator_value_label(aggregator, value)
         value
       end
 
       def human_dimension_value_label(dimension, value)
+        return human_null_value_label(dimension) if value.nil?
+
         case dimension
         when Repor::Dimensions::CategoryDimension
           human_category_value_label(dimension, value)
@@ -47,8 +53,15 @@ module Repor
         rescue
           min, max = value.min, value.max
         end
-        return "[#{min.round(2)}, #{max.round(2)})" if min && max
-        value
+        if min && max
+          "[#{min.round(2)}, #{max.round(2)})"
+        elsif min
+          ">= #{min.round(2)}"
+        elsif max
+          "< #{max.round(2)}"
+        else
+          human_null_value_label(dimension)
+        end
       end
 
       def time_formats
@@ -64,9 +77,14 @@ module Repor
           time_formats.each do |step, format|
             return min.strftime(format) if max == min.advance(step => 1)
           end
-          return "#{min} to #{max}"
+          "#{min} to #{max}"
+        elsif min
+          "after #{min}"
+        elsif max
+          "before #{max}"
+        else
+          human_null_value_label(dimension)
         end
-        value
       end
 
       def record_type

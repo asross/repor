@@ -5,6 +5,8 @@
     <h2>Form</h2>
     <%= form_tag request.fullpath, method: 'get', id: 'report-form', autocomplete: 'off' do %>
       <%= Repor::Serializers::FormFieldSerializer.new(@report).html_fields %><br>
+      <label><%= check_box_tag 'post_report[sort_desc]', "1", @report.params[:sort_desc].present? %> Sort Desc?</label><br>
+      <label><%= check_box_tag 'post_report[nulls_last]', "1", @report.params[:nulls_last].present? %> Nulls Last?</label><br>
       <%= submit_tag 'Run report', class: 'pure-button pure-button-primary' %>
     <% end %>
 

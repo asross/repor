@@ -56,8 +56,8 @@ module Repor
 
       def category_dimension_field(dimension)
         options = [[nil, nil]]
+
         dimension.all_values.each do |value|
-          next if value.nil?
           options << [human_dimension_value_label(dimension, value), value]
         end
 

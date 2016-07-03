@@ -106,8 +106,12 @@ module Repor
         bin_class.from_hash(bin)
       end
 
-      def sanitize(sql_value)
-        bin_class.from_sql(sql_value)
+      def sanitize_sql_value(value)
+        bin_class.from_sql(value)
+      end
+
+      def data_contains_nil?
+        report.records.where("#{expression} IS NULL").exists?
       end
 
       def autopopulate_bins
@@ -128,6 +132,12 @@ module Repor
           bin_edge = bin[:max]
           iters += 1
           raise "too many bins, likely an internal error" if iters > max_bins
+        end
+
+        bins.reverse! if sort_desc?
+
+        if data_contains_nil?
+          nulls_last?? bins.push(nil) : bins.unshift(nil)
         end
 
         bins
