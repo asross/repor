@@ -273,6 +273,9 @@ unbounded on one side, null) and handle mapping between SQL and Ruby
 representations of their values. You may find bin objects useful in working
 with report data, and they can also be customized.
 
+If you want to change how `repor` maps SQL values to the dimension values of
+`report.data`, you can override `YourDimension#sanitize_sql_value`.
+
 #### Customizing dimensions
 
 You can define custom dimension classes by inheriting from one of the existing
@@ -292,7 +295,7 @@ class UserReport < Repor::Report
 end
 ```
 
-Common methods to override include `order_expression`, `sanitize`,
+Common methods to override include `order_expression`, `sanitize_sql_value`,
 `validate_params!`, `group_values`, and `default_bin_width`.
 
 Note that if you inherit directly from  `Repor::Dimensions::BaseDimension`, you
