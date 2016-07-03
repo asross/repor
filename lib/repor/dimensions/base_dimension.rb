@@ -82,7 +82,7 @@ module Repor
       end
 
       def params
-        report.params.fetch(:dimensions, {}).fetch(name, {})
+        report.params.fetch(:dimensions, {})[name].presence || {}
       end
 
       private

@@ -1,4 +1,8 @@
 FactoryGirl.define do
+  factory :author do
+    name { Faker::Name.name }
+  end
+
   [:post, :comment].each do |type|
     factory type do
       transient { author nil }
