@@ -7,6 +7,27 @@
 enough to accommodate many use cases, but opinionated enough to avoid the need
 for boilerplate.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Repor](#repor-)
+  - [Basic usage](#basic-usage)
+  - [Instantiating reports](#instantiating-reports)
+  - [Defining reports (and passing dimension parameters)](#defining-reports-and-passing-dimension-parameters)
+    - [Base relation](#base-relation)
+    - [Dimensions (x-axes)](#dimensions-x-axes)
+      - [Filtering by dimensions](#filtering-by-dimensions)
+      - [Grouping by dimensions](#grouping-by-dimensions)
+        - [Bin dimension grouping parameters](#bin-dimension-grouping-parameters)
+      - [Customizing dimensions](#customizing-dimensions)
+    - [Aggregators (y-axes)](#aggregators-y-axes)
+      - [Customizing aggregators](#customizing-aggregators)
+  - [Serializing a report object](#serializing-a-report-object)
+  - [Contributing](#contributing)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Basic usage
 
 Here are some examples of how to define, run, and serialize a `Repor::Report`:
