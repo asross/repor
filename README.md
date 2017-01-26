@@ -10,21 +10,20 @@ for boilerplate.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Repor](#repor-)
-  - [Basic usage](#basic-usage)
-  - [Instantiating reports](#instantiating-reports)
-  - [Defining reports (and passing dimension parameters)](#defining-reports-and-passing-dimension-parameters)
-    - [Base relation](#base-relation)
-    - [Dimensions (x-axes)](#dimensions-x-axes)
-      - [Filtering by dimensions](#filtering-by-dimensions)
-      - [Grouping by dimensions](#grouping-by-dimensions)
-        - [Bin dimension grouping parameters](#bin-dimension-grouping-parameters)
-      - [Customizing dimensions](#customizing-dimensions)
-    - [Aggregators (y-axes)](#aggregators-y-axes)
-      - [Customizing aggregators](#customizing-aggregators)
-  - [Serializing a report object](#serializing-a-report-object)
-  - [Contributing](#contributing)
-  - [License](#license)
+
+- [Basic usage](#basic-usage)
+- [Building reports](#building-reports)
+- [Defining reports](#defining-reports)
+  - [Base relation](#base-relation)
+  - [Dimensions (x-axes)](#dimensions-x-axes)
+    - [Filtering by dimensions](#filtering-by-dimensions)
+    - [Grouping by dimensions](#grouping-by-dimensions)
+    - [Customizing dimensions](#customizing-dimensions)
+  - [Aggregators (y-axes)](#aggregators-y-axes)
+    - [Customizing aggregators](#customizing-aggregators)
+- [Serializing reports](#serializing-reports)
+- [Contributing](#contributing)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -128,7 +127,7 @@ run a report, you instantiate it with one aggregator and at least one dimension,
 then inspect its `data`. You can also wrap it in a serializer to get results in
 useful formats.
 
-## Instantiating reports
+## Building reports
 
 Just call `ReportClass.new(params)`, where `params` is a hash with these keys:
 
@@ -139,7 +138,7 @@ Just call `ReportClass.new(params)`, where `params` is a hash with these keys:
 
 See below for more details about dimension-specific parameters.
 
-## Defining reports (and passing dimension parameters)
+## Defining reports
 
 ### Base relation
 
@@ -250,8 +249,6 @@ strings of digits. For `TimeDimension`, the bin values should be dates/times or
 #### Grouping by dimensions
 
 To group by a dimension, pass its `name` to `params[:groupers]`.
-
-##### Bin dimension grouping parameters
 
 For bin dimensions (`NumberDimension` and `TimeDimension`), where the values
 being grouped by are ranges of numbers or times, you can specify additional
@@ -379,7 +376,7 @@ end
 aggregator :sigma_likes, StandardDeviationAggregator, expression: 'posts.likes'
 ```
 
-## Serializing a report object
+## Serializing reports
 
 After defining and running a report, you can wrap it in a serializer to get its
 data in a more useful format.
