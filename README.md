@@ -181,7 +181,8 @@ Finally, you can also use `autoreport_on` if you'd like to automatically infer
 dimensions from your columns and associations. `autoreport_on` will try to map
 most columns to dimensions, and if the column in question is for a `belongs_to`
 association, will even try to join and report on the association's name:
-```
+
+```ruby
 class PostReport < Repor::Report
   autoreport_on Post
 end
