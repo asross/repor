@@ -168,9 +168,9 @@ module Repor
           else
             category_dimension column.name
           end
-        elsif column.cast_type.type == :datetime
+        elsif %i[datetime timestamp time date].include? column.type
           time_dimension column.name
-        elsif column.cast_type.number?
+        elsif %i[integer float decimal].include? column.type
           number_dimension column.name
         else
           category_dimension column.name
