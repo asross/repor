@@ -50,7 +50,7 @@ module Repor
       def valid_duration?(d)
         case d
         when Hash
-          d.all? { |step, n| step.to_sym.in?(STEPS) && n.is_a?(Fixnum) }
+          d.all? { |step, n| step.to_sym.in?(STEPS) && n.is_a?(Numeric) }
         when String
           d =~ DURATION_PATTERN
         else
