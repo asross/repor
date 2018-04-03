@@ -6,7 +6,7 @@ ActiveRecord::Migrator.migrations_paths = [File.expand_path("../../spec/dummy/db
 require "rails/test_help"
 
 require 'rspec/rails'
-require 'factory_girl_rails'
+require 'factory_bot_rails'
 require 'pry'
 
 # Load support files
@@ -16,5 +16,5 @@ ActiveRecord::Migration.check_pending! if defined?(ActiveRecord::Migration)
 
 RSpec.configure do |config|
   config.use_transactional_fixtures = true
-  config.include FactoryGirl::Syntax::Methods
+  config.include FactoryBot::Syntax::Methods
 end
