@@ -70,7 +70,7 @@ module Repor
           when /^([^,]+),(.+)$/ then new($1, $2)
           when /^([^,]+),$/     then new($1, nil)
           when /^,(.+)$/        then new(nil, $1)
-          when ','              then new(nil, nil)
+          when ',', nil         then new(nil, nil)
           else
             raise "Unexpected SQL bin format #{value}"
           end

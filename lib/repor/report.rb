@@ -2,97 +2,20 @@ module Repor
   class Report
     delegate :klass, to: :class
 
-    attr_reader :params
 
-    def initialize(params = {})
-      @params = params.deep_symbolize_keys.deep_dup
-      deep_strip_blanks(@params) unless @params[:strip_blanks] == false
-      validate_params!
-    end
 
-    def dimensions
-      @dimensions ||= build_axes(self.class.dimensions)
-    end
+    
 
-    def aggregators
-      @aggregators ||= build_axes(self.class.aggregators)
-    end
+    # 2. Add ability to nest dimensions
+    #   - this hierarchy of nested groups
+    #     - each level has its own aggregators
+    #     - the parent level may be an aggregate of all lower level data, or run a new SQL query
+    #     - a parent level may directly access data from a lower level, even if it runs a new query
+    #   - nested dimensions may be "hidden" and will not be serialized
 
-    def aggregator_name
-      params.fetch(:aggregator, default_aggregator_name).to_sym
-    end
 
-    def aggregator
-      @aggregator ||= aggregators[aggregator_name]
-    end
 
-    def grouper_names
-      names = params.fetch(:groupers, default_grouper_names)
-      names = names.is_a?(Hash) ? names.values : Array.wrap(names)
-      names.map(&:to_sym)
-    end
 
-    def groupers
-      @groupers ||= dimensions.values_at(*grouper_names)
-    end
-
-    def filters
-      @filters ||= dimensions.values.select(&:filtering?)
-    end
-
-    def relators
-      filters | groupers
-    end
-
-    def base_relation
-      params.fetch(:relation, klass.all)
-    end
-
-    def table_name
-      klass.table_name
-    end
-
-    def relation
-      @relation ||= relators.reduce(base_relation) do |relation, dimension|
-        dimension.relate(relation)
-      end
-    end
-
-    def records
-      @records ||= filters.reduce(relation) do |relation, dimension|
-        dimension.filter(relation)
-      end
-    end
-
-    def groups
-      @groups ||= groupers.reduce(records) do |relation, dimension|
-        dimension.group(relation)
-      end
-    end
-
-    def raw_data
-      @raw_data ||= aggregator.aggregate(groups)
-    end
-
-    def group_values
-      @group_values ||= all_combinations_of(groupers.map(&:group_values))
-    end
-
-    # flat hash of
-    # { [x1, x2, x3] => y }
-    def flat_data
-      @flat_data ||= Hash[group_values.map { |x| [x, raw_data[x]] }]
-    end
-
-    # nested array of
-    # [{ key: x3, values: [{ key: x2, values: [{ key: x1, value: y }] }] }]
-    def nested_data
-      @nested_data ||= nest_data
-    end
-
-    def data
-      nested_data
-    end
 
     class << self
       def dimensions
@@ -184,70 +107,172 @@ module Repor
       end
     end
 
-    private def build_axes(axes)
+    attr_reader :params
+
+    def initialize(params = {})
+      @params = params.deep_symbolize_keys.deep_dup
+      deep_strip_blanks(@params) unless @params[:strip_blanks] == false
+      @params[:parent_groupers] ||= @params[:groupers] if @params.include?(:calculations)
+      validate_params!
+    end
+
+    def dimensions
+      @dimensions ||= build_axes(self.class.dimensions)
+    end
+
+    def aggregators
+      @aggregators ||= build_axes(self.class.aggregators)
+    end
+
+    def aggregator_name
+      params.fetch(:aggregator, default_aggregator_name).to_sym
+    end
+
+    def aggregator
+      @aggregator ||= aggregators[aggregator_name]
+    end
+
+    def grouper_names
+      names = params.fetch(:groupers, default_grouper_names)
+      names = names.is_a?(Hash) ? names.values : Array.wrap(names)
+      names.map(&:to_sym)
+    end
+
+    def groupers
+      @groupers ||= dimensions.values_at(*grouper_names)
+    end
+
+    def filters
+      @filters ||= dimensions.values.select(&:filtering?)
+    end
+
+    def relators
+      filters | groupers
+    end
+
+    def base_relation
+      params.fetch(:relation, klass.all)
+    end
+
+    def table_name
+      klass.table_name
+    end
+
+    def relation
+      @relation ||= relators.reduce(base_relation) do |relation, dimension|
+        dimension.relate(relation)
+      end
+    end
+
+    def records
+      @records ||= filters.reduce(relation) do |relation, dimension|
+        dimension.filter(relation)
+      end
+    end
+
+    def groups
+      @groups ||= groupers.reduce(records) do |relation, dimension|
+        dimension.group(relation)
+      end
+    end
+
+    def calculations
+      @calculations ||= Array(params[:calculations]).collect do |calculation, options|
+        calculator_class = "Calculator::#{options[:calculator]}".safe_constantize
+        calculator_class.new(options.merge({name: calculation})) unless calculator_class.nil?
+      end.compact
+    end
+
+    def raw_data
+      @raw_data ||= case
+      when @params.include?(:raw_data) && @params.exclude?(:calculations)
+        @params[:raw_data]
+      else
+        aggregator.aggregate(groups, @params.slice(:raw_data, :parent_report, :parent_groupers, :calculations).compact)
+      end
+    end
+
+    def group_values
+      @group_values ||= all_combinations_of(groupers.map(&:group_values))
+    end
+
+    # flat hash of
+    # { [x1, x2, x3] => y }
+    def flat_data
+      @flat_data ||= Hash[group_values.map { |x| [x, raw_data[x]] }]
+    end
+
+    # nested array of
+    # [{ key: x3, values: [{ key: x2, values: [{ key: x1, value: y }] }] }]
+    def nested_data
+      @nested_data ||= nest_data
+    end
+    alias_method :data, :nested_data
+
+    def totals_data
+      @totals_data ||= case
+      when @params.include?(:raw_data) && @params.exclude?(:calculations)
+        @params[:totals_data] || {}
+      else
+        aggregator.total(@params.slice(:totals_data, :parent_report, :parent_groupers, :calculations).compact)
+      end
+    end
+    alias_method :totals, :totals_data
+
+    private
+
+    def build_axes(axes)
       axes.map { |name, h| [name, h[:axis_class].new(name, self, h[:opts])] }.to_h
     end
 
-    private def all_combinations_of(values)
+    def all_combinations_of(values)
       values[0].product(*values[1..-1])
     end
 
-    private def nest_data(groupers=self.groupers, prefix=[])
-      head, rest = groupers.last, groupers[0..-2]
-      head.group_values.map do |x|
-        if rest.any?
-          { key: x, values: nest_data(rest, [x]+prefix) }
+    def nest_data(groupers=self.groupers, prefix=[])
+      groupers = groupers.dup
+      group = groupers.pop
+
+      group.group_values.map do |x|
+        if groupers.any?
+          { key: x, values: nest_data(groupers, [x]+prefix) }
         else
           { key: x, value: raw_data[([x]+prefix)] }
         end
       end
     end
 
-    private def validate_params!
-      incomplete_msg = "You must declare at least one aggregator and one " \
-        "dimension to initialize a report. See the README for more details."
+    def validate_params!
+      incomplete_msg = "You must declare at least one aggregator and one dimension to initialize a report. See the README for more details."
+      raise Repor::InvalidParamsError, "#{self.class} doesn't have any aggregators declared! #{incomplete_msg}" if aggregators.blank?
+      raise Repor::InvalidParamsError, "#{self.class} doesn't have any dimensions declared! #{incomplete_msg}" if dimensions.blank?
+      raise Repor::InvalidParamsError, 'parent_report must be included in order to process calculations' if @params.include?(:calculations) && @params.exclude?(:parent_report)
 
-      if aggregators.blank?
-        raise Repor::InvalidParamsError, "#{self.class} doesn't have any " \
-          "aggregators declared! #{incomplete_msg}"
-      end
-
-      if dimensions.blank?
-        raise Repor::InvalidParamsError, "#{self.class} doesn't have any " \
-          "dimensions declared! #{incomplete_msg}"
-      end
-
-      unless aggregator.present?
-        invalid_param!(:aggregator,
-          "#{aggregator_name} is not a valid aggregator (should be in #{aggregators.keys})")
-      end
-
-      unless groupers.all?(&:present?)
-        invalid_param!(:groupers,
-          "one of #{grouper_names} is not a valid dimension (should all be in #{dimensions.keys})")
-      end
+      invalid_param!(:aggregator, "#{aggregator_name} is not a valid aggregator (should be in #{aggregators.keys})") unless aggregator.present?
+      invalid_param!(:groupers, "one of #{grouper_names} is not a valid dimension (should all be in #{dimensions.keys})") unless groupers.all?(&:present?)
+      invalid_param!(:parent_report, 'must be an instance of Repor::Report') unless @params.exclude?(:parent_report) || @params[:parent_report].kind_of?(Repor::Report)
     end
 
-    private def invalid_param!(param_key, message)
+    def invalid_param!(param_key, message)
       raise InvalidParamsError, "Invalid value for params[:#{param_key}]: #{message}"
     end
 
-    private def default_aggregator_name
+    def default_aggregator_name
       aggregators.keys.first
     end
 
-    private def default_grouper_names
+    def default_grouper_names
       [dimensions.keys.first]
     end
 
-    private def strippable_blank?(value)
+    def strippable_blank?(value)
       case value
       when String, Array, Hash then value.blank?
       else false
       end
     end
 
-    private def deep_strip_blanks(hash, depth = 0)
+    def deep_strip_blanks(hash, depth = 0)
       raise "very deep hash or, more likely, internal error" if depth > 100
       hash.delete_if do |key, value|
         strippable_blank?(
