@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    repor (0.1.0)
+    repor (0.2.0)
       rails (~> 5.1)
 
 GEM
@@ -46,7 +46,6 @@ GEM
       tzinfo (~> 1.1)
     arel (8.0.0)
     builder (3.2.3)
-    byebug (10.0.2)
     coderay (1.1.2)
     concurrent-ruby (1.0.5)
     crass (1.0.3)
@@ -145,7 +144,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  byebug
   database_cleaner (~> 1.6)
   factory_bot_rails (~> 4.8)
   faker (~> 1.6)
