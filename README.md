@@ -334,17 +334,17 @@ represent the quantities you're looking to measure across your dimensions.
 
 There are several built-in types of aggregators:
 
-- `CountAggregator`
+- `Aggregator::Count`
     - counts the number of distinct records in each group
-- `SumAggregator`
+- `Aggregator::Sum`
     - sums an `expression` over each distinct record in each group
-- `AvgAggregator`
+- `Aggregator::Average`
     - sum divided by count
-- `MinAggregator`
+- `Aggregator::Min`
     - finds the minimum value of `expression` in each group
-- `MaxAggregator`
+- `Aggregator::Max`
     - finds the maximum value of `expression` in each group
-- `ArrayAggregator`
+- `Aggregator::Array`
     - returns an array of `expression` values in each group (PostgreSQL only)
     - useful if you want to drill down into the data behind an aggregation
 

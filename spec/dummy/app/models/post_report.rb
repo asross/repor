@@ -6,7 +6,7 @@ class PostReport < Repor::Report
   min_aggregator :min_created_at, expression: 'posts.created_at'
   max_aggregator :max_likes, expression: 'posts.likes'
   max_aggregator :max_created_at, expression: 'posts.created_at'
-  avg_aggregator :avg_likes, expression: 'posts.likes'
+  average_aggregator :avg_likes, expression: 'posts.likes'
   array_aggregator :post_ids, expression: 'posts.id'
   category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(
     "LEFT OUTER JOIN authors ON authors.id = posts.author_id"

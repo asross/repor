@@ -178,8 +178,8 @@ describe Repor::Report do
     it 'is a curried hash' do
       expect(report_class.aggregators.keys).to eq [:count, :likes]
       expect(report.aggregators.keys).to eq [:count, :likes]
-      expect(report.aggregators[:count]).to be_a Repor::Aggregators::CountAggregator
-      expect(report.aggregators[:likes]).to be_a Repor::Aggregators::SumAggregator
+      expect(report.aggregators[:count]).to be_a Repor::Aggregator::Count
+      expect(report.aggregators[:likes]).to be_a Repor::Aggregator::Sum
     end
   end
 

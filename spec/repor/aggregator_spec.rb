@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-describe Repor::Aggregators do
+describe Repor::Aggregator do
   let(:report_class) do
     Class.new(Repor::Report) do
       report_on :Post
       category_dimension :author, expression: 'authors.name', relation: ->(r) { r.left_outer_joins(:author) }
       count_aggregator :count
       sum_aggregator :total_likes, expression: 'posts.likes'
-      avg_aggregator :mean_likes, expression: 'posts.likes'
+      average_aggregator :mean_likes, expression: 'posts.likes'
       min_aggregator :min_likes, expression: 'posts.likes'
       max_aggregator :max_likes, expression: 'posts.likes'
       array_aggregator :post_ids, expression: 'posts.id'

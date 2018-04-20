@@ -1,7 +1,7 @@
 module Repor
-  module Aggregators
-    class MinAggregator < BaseAggregator
-      def aggregation(groups)
+  module Aggregator
+    class Min < Base
+      def aggregate(groups)
         relate(groups).select("MIN(#{expression}) AS #{sql_value_name}")
       end
     end

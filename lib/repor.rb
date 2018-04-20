@@ -17,13 +17,13 @@ end
 
 require 'repor/invalid_params_error'
 
-require 'repor/aggregators/base_aggregator'
-require 'repor/aggregators/count_aggregator'
-require 'repor/aggregators/avg_aggregator'
-require 'repor/aggregators/sum_aggregator'
-require 'repor/aggregators/min_aggregator'
-require 'repor/aggregators/max_aggregator'
-require 'repor/aggregators/array_aggregator'
+require 'repor/aggregator/base'
+require 'repor/aggregator/array'
+require 'repor/aggregator/average'
+require 'repor/aggregator/count'
+require 'repor/aggregator/max'
+require 'repor/aggregator/min'
+require 'repor/aggregator/sum'
 
 require 'repor/dimensions/base_dimension'
 require 'repor/dimensions/bin_dimension'

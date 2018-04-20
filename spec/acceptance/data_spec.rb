@@ -11,7 +11,7 @@ describe 'more complicated case' do
 
       count_aggregator :count
       sum_aggregator :total_likes, expression: 'posts.likes'
-      avg_aggregator :mean_likes, expression: 'posts.likes'
+      average_aggregator :mean_likes, expression: 'posts.likes'
       min_aggregator :min_likes, expression: 'posts.likes'
       max_aggregator :max_likes, expression: 'posts.likes'
     end

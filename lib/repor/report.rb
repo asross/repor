@@ -27,10 +27,10 @@ module Repor
         DIM_HELPERS
       end
 
-      %w(count sum avg min max array).each do |type|
+      %w(count sum average min max array).each do |type|
         class_eval <<-AGG_HELPERS, __FILE__, __LINE__
           def #{type}_aggregator(name, opts = {})
-            aggregator(name, Aggregators::#{type.classify}Aggregator, opts)
+            aggregator(name, Aggregator::#{type.classify}, opts)
           end
         AGG_HELPERS
       end
@@ -161,7 +161,7 @@ module Repor
       @aggregation = if options.include?(:raw_data)
         options[:raw_data]
       else
-        results = aggregators.values.reduce(groups) { |relation, aggregator| relation.merge(aggregator.aggregation(base_relation)) }
+        results = aggregators.values.reduce(groups) { |relation, aggregator| relation.merge(aggregator.aggregate(base_relation)) }
 
         results.each_with_object({}) do |obj, results_hash|
           aggregators.each do |name, aggregator|
