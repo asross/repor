@@ -21,7 +21,7 @@ module Repor
 
       def aggregator_field
         select_tag("#{prefix}[aggregator]",
-          options_for_select(aggregator_options, report.aggregator_name))
+          options_for_select(aggregator_options, report.aggregators.keys.first))
       end
 
       def primary_grouper_field

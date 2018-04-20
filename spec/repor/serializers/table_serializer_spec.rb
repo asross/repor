@@ -13,7 +13,7 @@ describe Repor::Serializers::TableSerializer do
 
   let(:report) do
     report_class.new(
-      aggregator: :post_count,
+      aggregators: :post_count,
       groupers: %i[created_at likes title],
       dimensions: {
         created_at: { bin_width: '1 day' },

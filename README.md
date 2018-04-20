@@ -50,7 +50,7 @@ end
 report = PostReport.new(
   relation: Post.published,
   groupers: [:author],
-  aggregator: :number_of_posts,
+  aggregators: :number_of_posts,
   dimensions: {
     likes: {
       only: { min: 4 }
@@ -73,7 +73,7 @@ puts report.data
 
 report = PostReport.new(
   groupers: [:author, :created_at],
-  aggregator: :total_likes,
+  aggregators: :total_likes,
   dimensions: {
     created_at: {
       only: { min: '1985', max: '1987' },

@@ -10,10 +10,10 @@ module Repor
       end
 
       # Consider overriding many of these methods to use I18n with keys based
-      # on the aggregator or dimension name.
+      # on the aggregators or dimension name.
 
-      def human_aggregator_label(aggregator)
-        aggregator.name.to_s.humanize
+      def human_aggregator_label(aggregators)
+        aggregators.keys.collect { |aggregator| aggregator.to_s.humanize }.join(' ')
       end
 
       def human_dimension_label(dimension)
@@ -92,7 +92,7 @@ module Repor
       end
 
       def axis_summary
-        y = human_aggregator_label(report.aggregator)
+        y = human_aggregator_label(report.aggregators)
         xes = report.groupers.map(&method(:human_dimension_label))
         count = pluralize(report.records.count, record_type)
         "#{y} by #{xes.to_sentence} for #{count}"

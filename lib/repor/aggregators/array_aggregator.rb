@@ -6,7 +6,7 @@ module Repor
           fail InvalidParamsError, "array agg is only supported in Postgres"
         end
 
-        groups.select("ARRAY_AGG(#{expression}) AS #{sql_value_name}")
+        relate(groups).select("ARRAY_AGG(#{expression}) AS #{sql_value_name}")
       end
     end
   end
