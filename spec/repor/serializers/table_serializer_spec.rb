@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Repor::Serializers::TableSerializer do
+describe Repor::Serializer::Table do
   let(:report_class) do
     Class.new(Repor::Report) do
       report_on :Post
@@ -23,7 +23,7 @@ describe Repor::Serializers::TableSerializer do
   end
 
   let(:table) do
-    Repor::Serializers::TableSerializer.new(report)
+    Repor::Serializer::Table.new(report)
   end
 
   before do

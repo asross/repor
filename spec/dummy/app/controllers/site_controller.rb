@@ -1,7 +1,7 @@
 class SiteController < ApplicationController
   def report
     @report = PostReport.new(params.fetch(:post_report, {}))
-    @csv = Repor::Serializers::CsvSerializer.new(@report)
+    @csv = Repor::Serializer::Csv.new(@report)
 
     respond_to do |format|
       format.html

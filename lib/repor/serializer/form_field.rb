@@ -1,6 +1,6 @@
 module Repor
-  module Serializers
-    class FormFieldSerializer < BaseSerializer
+  module Serializer
+    class FormField < Base
       include ActionView::Helpers::FormTagHelper
       include ActionView::Helpers::FormOptionsHelper
 

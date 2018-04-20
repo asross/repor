@@ -1,6 +1,6 @@
 module Repor
-  module Serializers
-    class TableSerializer < BaseSerializer
+  module Serializer
+    class Table < Base
       def headers
         report.groupers.map(&method(:human_dimension_label)) + [human_aggregator_label(report.aggregators)]
       end

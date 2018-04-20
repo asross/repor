@@ -1,6 +1,6 @@
 module Repor
-  module Serializers
-    class BaseSerializer
+  module Serializer
+    class Base
       include ActionView::Helpers::TextHelper
 
       attr_reader :report

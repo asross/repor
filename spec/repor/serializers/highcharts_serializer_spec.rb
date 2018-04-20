@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Repor::Serializers::HighchartsSerializer do
+describe Repor::Serializer::Highcharts do
   let(:report_class) do
     Class.new(Repor::Report) do
       report_on :Post
@@ -12,7 +12,7 @@ describe Repor::Serializers::HighchartsSerializer do
   end
 
   let(:chart) do
-    Repor::Serializers::HighchartsSerializer.new(report)
+    Repor::Serializer::Highcharts.new(report)
   end
 
   before do

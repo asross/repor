@@ -110,12 +110,12 @@ puts report.data
 #   ]
 # }]
 
-csv_serializer = Repor::Serializers::CsvSerializer.new(report)
+csv_serializer = Repor::Serializer::Csv.new(report)
 puts csv_serializer.csv_text
 
 # => csv text string
 
-chart_serializer = Repor::Serializers::HighchartsSerializer.new(report)
+chart_serializer = Repor::Serializer::Highcharts.new(report)
 puts chart_serializer.highcharts_options
 
 # => highcharts options hash
@@ -382,20 +382,20 @@ aggregator :sigma_likes, StandardDeviationAggregator, expression: 'posts.likes'
 After defining and running a report, you can wrap it in a serializer to get its
 data in a more useful format.
 
-`TableSerializer` defines `caption`, `headers`, and `each_row`, which can be
+`Serializer::Table` defines `caption`, `headers`, and `each_row`, which can be
 used to construct a table. It also wraps dimension and aggregator names and
 values in formatting methods, which can be overridden, e.g. if you would like to
 use I18n for date or enum column formatting. You can override these methods on
-`BaseSerializer` if you would like them to apply everywhere.
+`Serializer::Base` if you would like them to apply everywhere.
 
-`CsvSerializer` dumps the data from `TableSerializer` to a CSV string or file.
+`Serializer::Csv` dumps the data from `Serializer::Table` to a CSV string or file.
 
-`HighchartsSerializer` can map reports with 1-3 grouping dimensions to options
+`Serializer::Highcharts` can map reports with 1-3 grouping dimensions to options
 for passing into the Highcharts charting library. Extra options included with
 the raw data makes it easy to implement features like detailed tooltips and
 drilldown.
 
-`FormFieldSerializer` represents report parameters as HTML form fields. Likely
+`Serializer::FormField` represents report parameters as HTML form fields. Likely
 you will want to implement your own form logic specific to your report class
 and application design, but it provides an easy and somewhat extensible way to
 get up and running.

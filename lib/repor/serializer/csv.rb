@@ -1,8 +1,8 @@
 require 'csv'
 
 module Repor
-  module Serializers
-    class CsvSerializer < TableSerializer
+  module Serializer
+    class Csv < Table
       def csv_text
         CSV.generate do |csv|
           csv << headers
