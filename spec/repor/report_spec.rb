@@ -285,10 +285,10 @@ describe Repor::Report do
     end
 
     it 'should let me test' do
-      # puts report.raw_data.inspect
-      # puts report.flat_data.inspect
-      # puts report.data.inspect
-      # puts report.totals.inspect
+      report.raw_data
+      report.flat_data
+      report.data
+      report.totals
     end
   end
 end
