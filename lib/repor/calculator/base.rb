@@ -1,13 +1,21 @@
 module Repor
   module Calculator
     class Base
-      attr_reader :name, :field, :parent_field, :totals
+      attr_reader :name, :report, :opts, :field, :parent_field, :totals, :default_value
 
-      def initialize(options)
-        @name = options[:name]
-        @field = options[:field]
-        @parent_field = options[:parent_field]
-        @totals = !!options[:totals]
+      def initialize(name, report, opts={})
+        @name = name
+        @report = report
+        @opts = opts
+        
+        @field = opts[:field]
+        @parent_field = opts[:parent_field] || @field
+        @totals = !!opts[:totals]
+        @default_value = opts[:default_value]
+      end
+
+      def totals?
+        totals
       end
     end
   end

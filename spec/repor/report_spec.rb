@@ -15,13 +15,20 @@ describe Repor::Report do
   let(:groupers) { nil }
   let(:aggregators) { nil }
   let(:dimensions) { nil }
-  let(:report) { report_class.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions}.compact) }
+  let(:parent_report) { nil }
+  let(:parent_groupers) { nil }
+  let(:calculators) { nil }
+  let(:report) { report_class.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions, parent_report: parent_report, parent_groupers: parent_groupers, calculators: calculators}.compact) }
+
+  let(:jan) { { min: Time.zone.parse('2016-01-01'), max: Time.zone.parse('2016-02-01') } }
+  let(:feb) { { min: Time.zone.parse('2016-02-01'), max: Time.zone.parse('2016-03-01') } }
+  let(:mar) { { min: Time.zone.parse('2016-03-01'), max: Time.zone.parse('2016-04-01') } }
 
   describe '.autoreport_on' do
     let(:report_class) { Class.new(Repor::Report) { autoreport_on :Post } }
 
     it 'infers dimensions from columns' do
-      expect(report_class.dimensions.keys).to match_array %i[created_at updated_at title author likes]
+      expect(report_class.dimensions.keys).to include(*%i[created_at updated_at title author likes])
     end
 
     it "should properly store created_at dimension class" do
@@ -52,38 +59,35 @@ describe Repor::Report do
   describe 'data access' do
     let(:groupers) { %w(author created_at) }
     let(:dimensions) { { created_at: { bin_width: { months: 1 } } } }
-    let(:jan) { { min: Time.zone.parse('2016-01-01'), max: Time.zone.parse('2016-02-01') } }
-    let(:feb) { { min: Time.zone.parse('2016-02-01'), max: Time.zone.parse('2016-03-01') } }
-    let(:mar) { { min: Time.zone.parse('2016-03-01'), max: Time.zone.parse('2016-04-01') } }
 
     before(:each) do
-      create(:post, author: 'Timmy', created_at: '2016-01-01')
-      create(:post, author: 'Timmy', created_at: '2016-01-12')
-      create(:post, author: 'Tammy', created_at: '2016-01-15')
-      create(:post, author: 'Tammy', created_at: '2016-03-01')
+      create(:post, author: 'Timmy', created_at: '2016-01-01', likes: 7)
+      create(:post, author: 'Timmy', created_at: '2016-01-12', likes: 4)
+      create(:post, author: 'Tammy', created_at: '2016-01-15', likes: 3)
+      create(:post, author: 'Tammy', created_at: '2016-03-01', likes: 19)
     end
 
     it 'should return raw_data' do
       expect(report.raw_data).to eq(
         ['Tammy', jan, 'count'] => 1,
-        ['Tammy', jan, 'likes'] => 0,
+        ['Tammy', jan, 'likes'] => 3,
         ['Tammy', mar, 'count'] => 1,
-        ['Tammy', mar, 'likes'] => 0,
+        ['Tammy', mar, 'likes'] => 19,
         ['Timmy', jan, 'count'] => 2,
-        ['Timmy', jan, 'likes'] => 0,
+        ['Timmy', jan, 'likes'] => 11,
       )
     end
 
     it 'should return flat_data' do
       expect(report.flat_data).to eq(
         ['Tammy', jan, 'count'] => 1,
-        ['Tammy', jan, 'likes'] => 0,
+        ['Tammy', jan, 'likes'] => 3,
         ['Tammy', feb, 'count'] => 0,
         ['Tammy', feb, 'likes'] => 0,
         ['Tammy', mar, 'count'] => 1,
-        ['Tammy', mar, 'likes'] => 0,
+        ['Tammy', mar, 'likes'] => 19,
         ['Timmy', jan, 'count'] => 2,
-        ['Timmy', jan, 'likes'] => 0,
+        ['Timmy', jan, 'likes'] => 11,
         ['Timmy', feb, 'count'] => 0,
         ['Timmy', feb, 'likes'] => 0,
         ['Timmy', mar, 'count'] => 0,
@@ -94,28 +98,74 @@ describe Repor::Report do
     it 'should return nested_data' do
       expect(report.nested_data).to eq [
         { key: jan, values: [
-          { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 0 }] },
-          { key: 'Timmy', values: [{ key: 'count', value: 2 }, { key: 'likes', value: 0 }] }
+          { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 3 }] },
+          { key: 'Timmy', values: [{ key: 'count', value: 2 }, { key: 'likes', value: 11 }] }
         ] },
         { key: feb, values: [
           { key: 'Tammy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }] },
           { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }] }
         ] },
         { key: mar, values: [
-          { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 0 }] },
+          { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 19 }] },
           { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }] }
         ] }
       ]
+    end
+
+    context 'with calculators' do
+      let(:report_class) do
+        Class.new(Repor::Report) do
+          report_on :Post
+          count_aggregator :count
+          sum_aggregator :likes
+          number_dimension :likes
+          category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+          time_dimension :created_at
+          ratio_calculator :ratio_total, field: :likes
+        end
+      end
+
+      let(:parent_groupers) { %i(author) }
+      let(:aggregators) { %i(count likes) }
+      let(:parent_report) { report_class.new({groupers: parent_groupers, aggregators: aggregators}) }
+      let(:calculators) { %i(ratio_total) }
+
+      it 'should calculate' do
+        puts report.data
+      end
     end
   end
 
   describe '#dimensions' do
     it 'is a curried hash' do
-      expect(report_class.dimensions.keys).to eq [:likes, :author, :created_at]
-      expect(report.dimensions.keys).to eq [:likes, :author, :created_at]
+      expect(report_class.dimensions.keys).to include(:likes, :author, :created_at)
+      expect(report.dimensions.keys).to include(:likes, :author, :created_at)
       expect(report.dimensions[:likes]).to be_a Repor::Dimension::Number
       expect(report.dimensions[:author]).to be_a Repor::Dimension::Category
       expect(report.dimensions[:created_at]).to be_a Repor::Dimension::Time
+    end
+  end
+
+  describe '#calculators' do
+    let(:report_class) do
+      Class.new(Repor::Report) do
+        report_on :Post
+        count_aggregator :count
+        sum_aggregator :likes
+        number_dimension :likes
+        category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+        time_dimension :created_at
+        ratio_calculator :ratio_total, field: :likes
+      end
+    end
+
+    let(:parent_groupers) { %i(author) }
+    let(:aggregators) { %i(count likes) }
+    let(:parent_report) { report_class.new({groupers: parent_groupers, aggregators: aggregators}) }
+    let(:calculators) { %i(ratio_total) }
+
+    it 'should return configured calculators' do
+      expect(report.calculators).to include(:ratio_total)
     end
   end
 
@@ -171,6 +221,17 @@ describe Repor::Report do
         expect(report.dimensions[:author].filter_values).to eq [nil]
         expect(report.records).to eq []
       end
+    end
+  end
+
+  describe '#parent_report' do
+    let(:groupers) { %i(author created_at) }
+    let(:aggregators) { %i(count likes) }
+    let(:dimensions) { { created_at: { bin_width: { months: 1 } } } }
+    let(:parent_report) { report_class.new({groupers: %i(author), aggregators: aggregators}) }
+
+    it 'should return passed parent report' do
+      expect(report.parent_report).to be_a report_class
     end
   end
 
@@ -267,13 +328,11 @@ describe Repor::Report do
         number_dimension :likes
         category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
         time_dimension :created_at
-
-        category_dimension :totals, expression: "'totals'"
       end
     end
 
     let(:groupers) { %w(author created_at) }
-    let(:aggregators) { :likes }
+    let(:aggregators) { %i(count likes) }
     let(:dimensions) { { likes: { bin_width: 1 }, created_at: { bin_width: { months: 1 } } } }
 
     before(:each) do
@@ -284,11 +343,13 @@ describe Repor::Report do
       create(:post, author: 'Tammy', created_at: '2016-03-15', likes: 2)
     end
 
-    it 'should let me test' do
-      report.raw_data
-      report.flat_data
-      report.data
-      report.totals
+    it 'should return total_data' do
+      expect(report.total_data).to eq [
+        { key: 'totals', values: [
+          { key: 'count', value: 5},
+          { key: 'likes', value: 12}
+        ] }
+      ]
     end
   end
 end

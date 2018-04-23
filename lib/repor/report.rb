@@ -6,7 +6,7 @@ module Repor
 
     class << self
       def dimensions
-        @dimensions ||= {}
+        @dimensions ||= { totals: { axis_class: Dimension::Category, opts: { expression: "'totals'" } } }
       end
 
       def dimension(name, dimension_class, opts = {})
@@ -21,6 +21,14 @@ module Repor
         aggregators[name.to_sym] = { axis_class: aggregator_class, opts: opts }
       end
 
+      def calculators
+        @calculators ||= {}
+      end
+
+      def calculator(name, calculator_class, opts = {})
+        calculators[name.to_sym] = { axis_class: calculator_class, opts: opts }
+      end
+
       %w(category number time).each do |type|
         class_eval <<-DIM_HELPERS, __FILE__, __LINE__
           def #{type}_dimension(name, opts = {})
@@ -33,6 +41,14 @@ module Repor
         class_eval <<-AGG_HELPERS, __FILE__, __LINE__
           def #{type}_aggregator(name, opts = {})
             aggregator(name, Aggregator::#{type.classify}, opts)
+          end
+        AGG_HELPERS
+      end
+
+      %w(ratio).each do |type|
+        class_eval <<-AGG_HELPERS, __FILE__, __LINE__
+          def #{type}_calculator(name, opts = {})
+            calculator(name, Calculator::#{type.classify}, opts)
           end
         AGG_HELPERS
       end
@@ -94,8 +110,6 @@ module Repor
       end
     end
 
-    
-
     def initialize(params = {})
       @params = params.deep_symbolize_keys.deep_dup
       deep_strip_blanks(@params) unless @params[:strip_blanks] == false
@@ -109,7 +123,7 @@ module Repor
 
       validate_params!
 
-      if @params.include?(:calculations)
+      if @params.include?(:calculators)
         aggregate if @raw_data.present?
         total if @total_data.present?
       end
@@ -124,7 +138,7 @@ module Repor
     end
 
     def grouper_names
-      names = params.fetch(:groupers, [dimensions.keys.first])
+      names = params.fetch(:groupers, [dimensions.except(:totals).keys.first])
       names = names.is_a?(Hash) ? names.values : Array.wrap(names)
       names.map(&:to_sym)
     end
@@ -167,10 +181,8 @@ module Repor
       end
     end
 
-    def calculations
-      @calculations ||= Array(params[:calculations]).collect do |calculation, options|
-        "Calculator::#{options[:calculator]}".safe_constantize&.new(options.merge({name: calculation}))
-      end.compact
+    def calculators
+      @calculators ||= build_axes(self.class.calculators.slice(*Array(params[:calculators]).collect(&:to_sym)))
     end
 
     def raw_data
@@ -220,17 +232,34 @@ module Repor
         aggregators.each do |name, aggregator|
           results_hash[groupers.map { |g| g.extract_sql_value(obj) }.push(name.to_s)] = obj.attributes[aggregator.sql_value_name] || aggregator.default_value
         end
-      end.each do |row|
+
         next if parent_report.nil?
 
-        calculations.each do |calculator|
-          row[calculator.name] = if calculator[:totals]
-            calculator.evaluate(row, parent_report.totals)
+        row_data = {}
+        row_data.merge!(dimensions.keys.zip(dimensions.values.collect{ |dimension| obj.attributes[dimension.send(:sql_value_name)] }).to_h)
+        row_data.merge!(aggregators.keys.zip(aggregators.values.collect{ |aggregator| obj.attributes[aggregator.sql_value_name] || aggregator.default_value }).to_h)
+
+        calculators.each do |name, calculator|
+
+          results_hash[groupers.map { |g| g.extract_sql_value(obj) }.push(name.to_s)] = if calculator.totals?
+            # calculator.evaluate(row_data, parent_report.totals)
           else
-            parent_row = parent_report.data.dig(*parent_groupers)
-            calculator.evaluate(row, parent_row) unless parent_row.nil?
+            parent_row, parent_value = parent_report.flat_data.detect do |parent_row, parent_value|
+              parent_row_data = parent_report.grouper_names.dup.push(:dimension, :value).zip(parent_row.push(parent_value)).to_h
+              parent_row_data[parent_row_data.delete(:dimension)] = parent_row_data.delete(:value)
+
+              parent_groupers.all? { |g| row_data[g] == parent_row_data[g] } && parent_row_data.symbolize_keys.include?(calculator.field.to_sym)
+            end
+
+            next unless parent_row.present?
+
+            parent_row_data = parent_report.grouper_names.dup.push(:dimension, :value).zip(parent_row.push(parent_value)).to_h
+            parent_row_data[parent_row_data.delete(:dimension)] = parent_row_data.delete(:value)
+
+            value = calculator.evaluate(row_data, parent_row_data.symbolize_keys!) unless parent_row_data.nil?
           end
         end
+
       end
     end
 
@@ -251,7 +280,11 @@ module Repor
         if groupers.any?
           { key: x, values: nest_data(groupers, [x]+prefix) }
         else
-          { key: x, values: aggregators.collect { |name, aggregator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || aggregator.default_value ) } } }
+          values = []
+          values.push *aggregators.collect { |name, aggregator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || aggregator.default_value ) } }
+          values.push *calculators.collect { |name, calculator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || calculator.default_value ) } }
+
+          { key: x, values: values }
         end
       end
     end
@@ -260,8 +293,8 @@ module Repor
       (@total_data || total_report.data).each do |row|
         next if parent_report.nil?
 
-        calculations.each do |calculator|
-          row[calculator.name] = if calculator[:totals]
+        calculators.each do |name, calculator|
+          row[name] = if calculator[:totals]
             calculator.evaluate(row, parent_report.totals)
           else
             parent_row = parent_report.dig(*parent_groupers)
@@ -274,8 +307,8 @@ module Repor
     def validate_params!
       incomplete_msg = "You must declare at least one aggregator and one dimension to initialize a report. See the README for more details."
       raise Repor::InvalidParamsError, "#{self.class.name} doesn't have any aggregators declared! #{incomplete_msg}" if aggregators.empty?
-      raise Repor::InvalidParamsError, "#{self.class.name} doesn't have any dimensions declared! #{incomplete_msg}" if dimensions.empty?
-      raise Repor::InvalidParamsError, 'parent_report must be included in order to process calculations' if @params.include?(:calculations) && parent_report.nil?
+      raise Repor::InvalidParamsError, "#{self.class.name} doesn't have any dimensions declared! #{incomplete_msg}" if dimensions.except(:totals).empty?
+      raise Repor::InvalidParamsError, 'parent_report must be included in order to process calculations' if @params.include?(:calculators) && parent_report.nil?
 
       (aggregators.keys - self.class.aggregators.keys).each do |aggregator|
         invalid_param!(:aggregator, "#{aggregator} is not a valid aggregator (should be in #{self.class.aggregators.keys})")

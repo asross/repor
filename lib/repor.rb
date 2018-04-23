@@ -25,6 +25,9 @@ require 'repor/aggregator/max'
 require 'repor/aggregator/min'
 require 'repor/aggregator/sum'
 
+require 'repor/calculator/base'
+require 'repor/calculator/ratio'
+
 require 'repor/dimension/base'
 require 'repor/dimension/bin'
 require 'repor/dimension/bin/set'

@@ -1,7 +1,7 @@
 module Repor
   module Calculator
     class Ratio < Base
-      def initialize(column)
+      def initialize(name, report, opts={})
         super
       end
 
