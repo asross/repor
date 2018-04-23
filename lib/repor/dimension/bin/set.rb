@@ -1,7 +1,7 @@
 module Repor
-  module Dimensions
-    class BinDimension
-      class Bin
+  module Dimension
+    class Bin
+      class Set
         def initialize(min, max)
           @min = min
           @max = max

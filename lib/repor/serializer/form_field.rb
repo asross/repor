@@ -49,8 +49,8 @@ module Repor
 
       def field_for(dimension)
         case dimension
-        when Repor::Dimensions::CategoryDimension then category_dimension_field(dimension)
-        when Repor::Dimensions::BinDimension then bin_dimension_field(dimension)
+        when Repor::Dimension::Category then category_dimension_field(dimension)
+        when Repor::Dimension::Set then bin_dimension_field(dimension)
         end
       end
 

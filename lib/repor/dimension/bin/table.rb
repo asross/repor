@@ -1,7 +1,7 @@
 module Repor
-  module Dimensions
-    class BinDimension
-      class BinTable < Array
+  module Dimension
+    class Bin
+      class Table < Array
         def initialize(values)
           super(values.compact)
         end

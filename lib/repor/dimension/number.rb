@@ -1,6 +1,6 @@
 module Repor
-  module Dimensions
-    class NumberDimension < BinDimension
+  module Dimension
+    class Number < Bin
       def validate_params!
         super
 
@@ -37,7 +37,7 @@ module Repor
         10
       end
 
-      class Bin < BinDimension::Bin
+      class Set < Bin::Set
         def parses?(value)
           Repor.numeric?(value)
         end

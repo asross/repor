@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::NumberDimension do
+describe Repor::Dimension::Number do
   def new_dimension(dimension_params = {}, report_params = {}, opts = {})
     report_params[:dimensions] = { foo: dimension_params }
-    Repor::Dimensions::NumberDimension.new(
+    Repor::Dimension::Number.new(
       :foo,
       OpenStruct.new(params: report_params),
       opts

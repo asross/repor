@@ -1,15 +1,15 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::BinDimension::BinTable do
-  let(:bin_class) { Repor::Dimensions::BinDimension::Bin }
+describe Repor::Dimension::Bin::Table do
+  let(:bin_set) { Repor::Dimension::Bin::Set }
 
   describe '#filter' do
     it 'ORs together predicates across bins' do
       table = described_class.new([
-        bin_class.new(nil, nil),
-        bin_class.new(0, nil),
-        bin_class.new(nil, 10),
-        bin_class.new(3, 5)
+        bin_set.new(nil, nil),
+        bin_set.new(0, nil),
+        bin_set.new(nil, 10),
+        bin_set.new(3, 5)
       ])
 
       sql = table.filter(Post, 'x').to_sql
@@ -21,10 +21,10 @@ describe Repor::Dimensions::BinDimension::BinTable do
   describe '#group' do
     it 'joins to a union of bin rows, then groups by the range' do
       table = described_class.new([
-        bin_class.new(nil, nil),
-        bin_class.new(0, nil),
-        bin_class.new(nil, 10),
-        bin_class.new(3, 5)
+        bin_set.new(nil, nil),
+        bin_set.new(0, nil),
+        bin_set.new(nil, 10),
+        bin_set.new(3, 5)
       ])
 
       sql = table.group(Post, 'likes', 'likes').to_sql

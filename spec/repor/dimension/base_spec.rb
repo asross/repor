@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::BaseDimension do
+describe Repor::Dimension::Base do
   def new_dimension(dimension_params = {}, report_params = {}, opts = {})
     report_params[:dimensions] = { foo: dimension_params }
-    Repor::Dimensions::BaseDimension.new(
+    Repor::Dimension::Base.new(
       :foo,
       OpenStruct.new(params: report_params),
       opts
@@ -87,7 +87,7 @@ describe Repor::Dimensions::BaseDimension do
 
   describe '#expression' do
     it 'defaults to treating name as a column of the report klass table' do
-      dimension = Repor::Dimensions::BaseDimension.new(
+      dimension = Repor::Dimension::Base.new(
         :bar,
         OpenStruct.new(table_name: 'foo')
       )

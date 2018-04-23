@@ -32,11 +32,11 @@ module Repor
         return human_null_value_label(dimension) if value.nil?
 
         case dimension
-        when Repor::Dimensions::CategoryDimension
+        when Repor::Dimension::Category
           human_category_value_label(dimension, value)
-        when Repor::Dimensions::NumberDimension
+        when Repor::Dimension::Number
           human_number_value_label(dimension, value)
-        when Repor::Dimensions::TimeDimension
+        when Repor::Dimension::Time
           human_time_value_label(dimension, value)
         else
           value

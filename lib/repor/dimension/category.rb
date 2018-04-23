@@ -1,6 +1,6 @@
 module Repor
-  module Dimensions
-    class CategoryDimension < BaseDimension
+  module Dimension
+    class Category < Base
       def filter(relation)
         values = filter_values
         query = "#{expression} IN (?)"

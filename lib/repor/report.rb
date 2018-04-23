@@ -24,7 +24,7 @@ module Repor
       %w(category number time).each do |type|
         class_eval <<-DIM_HELPERS, __FILE__, __LINE__
           def #{type}_dimension(name, opts = {})
-            dimension(name, Dimensions::#{type.classify}Dimension, opts)
+            dimension(name, Dimension::#{type.classify}, opts)
           end
         DIM_HELPERS
       end

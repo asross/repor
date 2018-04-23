@@ -1,6 +1,6 @@
 module Repor
-  module Dimensions
-    class BaseDimension
+  module Dimension
+    class Base
       attr_reader :name, :report, :opts
 
       def initialize(name, report, opts={})

@@ -204,11 +204,11 @@ data you're interested in. Dimensions objects can filter or group your relation
 by a SQL expression, and accept/return simple Ruby values of various types.
 
 There are several built-in types of dimensions:
-- `CategoryDimension`
+- `Category`
     - Groups/filters the relation by the discrete values of the `expression`
-- `NumberDimension`
+- `Number`
     - Groups/filters the relation by binning a continuous numeric `expression`
-- `TimeDimension`
+- `Time`
     - Like number dimensions, but the bins are increments of time
 
 You define dimensions in your report class like this:
@@ -236,22 +236,22 @@ the filtering or grouping requires joins or other SQL operations, a custom
 All dimensions can be filtered to one or more values by passing in
 `params[:dimensions][<dimension name>][:only]`.
 
-`CategoryDimension#only` should be passed the exact values you'd like to filter
+`Category#only` should be passed the exact values you'd like to filter
 to (or what will map to them after connection adapter quoting).
 
-`NumberDimension` and `TimeDimension` are "bin" dimensions, and their `only`s
+`Number` and `Time` are "bin" dimensions, and their `only`s
 should be passed one or more bin ranges. Bin ranges should be hashes of at
 least one of `min` and `max`, or they should just be `nil` to explicitly select
 rows for which `expression` is null. Bin range filtering is `min`-inclusive but
-`max`-exclusive. For `NumberDimension`, the bin values should be numbers or
-strings of digits. For `TimeDimension`, the bin values should be dates/times or
+`max`-exclusive. For `Number`, the bin values should be numbers or
+strings of digits. For `Time`, the bin values should be dates/times or
 `Time.zone.parse`-able strings.
 
 #### Grouping by dimensions
 
 To group by a dimension, pass its `name` to `params[:groupers]`.
 
-For bin dimensions (`NumberDimension` and `TimeDimension`), where the values
+For bin dimensions (`Number` and `Time`), where the values
 being grouped by are ranges of numbers or times, you can specify additional
 options to control the width and distribution of those bins. In particular,
 you can pass values to:
@@ -268,8 +268,8 @@ passed an array of the same min/max hashes or `nil` used in filtering.
 should be passed a positive integer.
 
 `bin_width` will tile the domain with bins of a fixed width. It should be
-passed a positive number for `NumberDimension`s and a "duration" for
-`TimeDimension`s. Durations can either be strings of a number followed by a time
+passed a positive number for `Number`s and a "duration" for
+`Time`s. Durations can either be strings of a number followed by a time
 increment (minutes, hours, days, weeks, months, years), or they can be hashes
 suitable for use with
 [`ActiveSupport::TimeWithZone#advance`](http://apidock.com/rails/ActiveSupport/TimeWithZone/advance).
@@ -280,12 +280,12 @@ params[:dimensions][<time dimension>][:bin_width] = '1 month'
 params[:dimensions][<time dimension>][:bin_width] = { months: 2, hours: 2 }
 ```
 
-`NumberDimension`s will default to using 10 bins and `TimeDimension`s will
+`Number`s will default to using 10 bins and `Time`s will
 default to using a sensical increment of time given the domain; you can
 customize this by overriding methods in those classes.
 
 Note that when you inspect `report.data` after grouping by a bin dimension, you
-will see the dimension values are actually `Repor::BinDimension::Bin` objects,
+will see the dimension values are actually `Repor::Bin::Base` objects,
 which respond to `min`, `max`, and various json/Hash methods. These are meant
 to provide a common interface for the different types of bins (double-bounded,
 unbounded on one side, null) and handle mapping between SQL and Ruby
@@ -300,7 +300,7 @@ If you want to change how `repor` maps SQL values to the dimension values of
 You can define custom dimension classes by inheriting from one of the existing
 ones:
 ```ruby
-class CaseInsensitiveCategoryDimension < Repor::Dimensions::CategoryDimension
+class CaseInsensitiveCategoryDimension < Repor::Dimension::Category
   def order_expression
     "UPPER(#{super})"
   end
@@ -317,14 +317,14 @@ end
 Common methods to override include `order_expression`, `sanitize_sql_value`,
 `validate_params!`, `group_values`, and `default_bin_width`.
 
-Note that if you inherit directly from  `Repor::Dimensions::BaseDimension`, you
+Note that if you inherit directly from  `Repor::Dimension::Base`, you
 will need to implement (at a minimum) `filter(relation)`, `group(relation)`, and
 `group_values`. See the base dimension class for more details.
 
-If you want custom behavior for bins, you can define `Bin` and `BinTable`
+If you want custom behavior for bins, you can define `Set` and `Table`
 classes nested inside your custom dimension classes (or override methods
-directly on `Repor::BinDimension::Bin(Table)`,
-`Repor::TimeDimension::Bin(Table)`, etc). See the relevant classes for more
+directly on `Repor::Dimension::Bin::Set(Table)`,
+`Repor::Dimension::Time::Set(Table)`, etc). See the relevant classes for more
 details.
 
 ### Aggregators (y-axes)

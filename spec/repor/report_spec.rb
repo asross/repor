@@ -25,23 +25,23 @@ describe Repor::Report do
     end
 
     it "should properly store created_at dimension class" do
-      expect(report_class.dimensions[:created_at][:axis_class]).to eq Repor::Dimensions::TimeDimension
+      expect(report_class.dimensions[:created_at][:axis_class]).to eq Repor::Dimension::Time
     end
 
     it "should properly store updated_at dimension class" do
-      expect(report_class.dimensions[:updated_at][:axis_class]).to eq Repor::Dimensions::TimeDimension
+      expect(report_class.dimensions[:updated_at][:axis_class]).to eq Repor::Dimension::Time
     end
 
     it "should properly store likes dimension class" do
-      expect(report_class.dimensions[:likes][:axis_class]).to eq Repor::Dimensions::NumberDimension
+      expect(report_class.dimensions[:likes][:axis_class]).to eq Repor::Dimension::Number
     end
 
     it "should properly store title dimension class" do
-      expect(report_class.dimensions[:title][:axis_class]).to eq Repor::Dimensions::CategoryDimension
+      expect(report_class.dimensions[:title][:axis_class]).to eq Repor::Dimension::Category
     end
 
     it "should properly store author dimension class" do
-      expect(report_class.dimensions[:author][:axis_class]).to eq Repor::Dimensions::CategoryDimension
+      expect(report_class.dimensions[:author][:axis_class]).to eq Repor::Dimension::Category
     end
 
     it 'should properly store author expression' do
@@ -113,9 +113,9 @@ describe Repor::Report do
     it 'is a curried hash' do
       expect(report_class.dimensions.keys).to eq [:likes, :author, :created_at]
       expect(report.dimensions.keys).to eq [:likes, :author, :created_at]
-      expect(report.dimensions[:likes]).to be_a Repor::Dimensions::NumberDimension
-      expect(report.dimensions[:author]).to be_a Repor::Dimensions::CategoryDimension
-      expect(report.dimensions[:created_at]).to be_a Repor::Dimensions::TimeDimension
+      expect(report.dimensions[:likes]).to be_a Repor::Dimension::Number
+      expect(report.dimensions[:author]).to be_a Repor::Dimension::Category
+      expect(report.dimensions[:created_at]).to be_a Repor::Dimension::Time
     end
   end
 

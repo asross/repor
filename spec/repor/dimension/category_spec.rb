@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::CategoryDimension do
+describe Repor::Dimension::Category do
   def author_dimension(report)
     described_class.new(:author, report, expression: 'authors.name', relation: ->(r) { r.joins(
       "LEFT OUTER JOIN authors ON authors.id = posts.author_id") })

@@ -1,6 +1,6 @@
 module Repor
-  module Dimensions
-    class TimeDimension < BinDimension
+  module Dimension
+    class Time < Bin
       STEPS = %i(seconds minutes hours days weeks months years)
       BIN_STEPS = (STEPS - [:seconds]).map { |s| s.to_s.singularize }
       DURATION_PATTERN = /\A\d+ (?:#{STEPS.map{|s| "#{s}?" }.join('|')})\z/
@@ -71,9 +71,9 @@ module Repor
         end
       end
 
-      class Bin < BinDimension::Bin
+      class Set < Bin::Set
         def parse(value)
-          Time.zone.parse(value.to_s.gsub('"', ''))
+          ::Time.zone.parse(value.to_s.gsub('"', ''))
         end
 
         def cast(value)

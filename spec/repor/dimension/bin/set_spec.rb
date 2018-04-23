@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::BinDimension::Bin do
+describe Repor::Dimension::Bin::Set do
   describe '.from_hash' do
     it 'builds a bin from a hash or nil' do
       bin = described_class.from_hash(min: 1, max: 2)

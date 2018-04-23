@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::BinDimension do
+describe Repor::Dimension::Bin do
   def new_dimension(dimension_params = {}, report_params = {}, opts = {})
     report_params[:dimensions] = { foo: dimension_params }
-    Repor::Dimensions::BinDimension.new(:foo,
+    Repor::Dimension::Bin.new(:foo,
       OpenStruct.new(params: report_params),
       opts
     )
@@ -30,7 +30,7 @@ describe Repor::Dimensions::BinDimension do
     end
 
     it 'falls back to the smallest value in the data' do
-      dimension = Repor::Dimensions::BinDimension.new(:likes,
+      dimension = Repor::Dimension::Bin.new(:likes,
         OpenStruct.new(records: Post, params: {}),
         expression: 'posts.likes'
       )

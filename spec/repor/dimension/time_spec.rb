@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Repor::Dimensions::TimeDimension do
+describe Repor::Dimension::Time do
   def new_dimension(dimension_params = {}, report_params = {}, opts = {})
     report_params[:dimensions] = { foo: dimension_params }
-    Repor::Dimensions::TimeDimension.new(
+    Repor::Dimension::Time.new(
       :foo,
       OpenStruct.new(params: report_params),
       opts

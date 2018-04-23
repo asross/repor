@@ -1,6 +1,6 @@
 module Repor
-  module Dimensions
-    class BinDimension < BaseDimension
+  module Dimension
+    class Bin < Base
       def max_bins
         2000
       end
@@ -90,24 +90,24 @@ module Repor
         end
       end
 
-      def bin_table_class
-        self.class.const_get(:BinTable)
+      def table
+        self.class.const_get(:Table)
       end
 
-      def bin_class
-        self.class.const_get(:Bin)
+      def set
+        self.class.const_get(:Set)
       end
 
       def to_bins(bins)
-        bin_table_class.new(bins.map(&method(:to_bin)))
+        table.new(bins.map(&method(:to_bin)))
       end
 
       def to_bin(bin)
-        bin_class.from_hash(bin)
+        set.from_hash(bin)
       end
 
       def sanitize_sql_value(value)
-        bin_class.from_sql(value)
+        set.from_sql(value)
       end
 
       def data_contains_nil?
