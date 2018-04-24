@@ -131,7 +131,20 @@ describe Repor::Report do
       let(:calculators) { %i(ratio_total) }
 
       it 'should calculate' do
-        puts report.data
+        expect(report.data).to eq [
+          { key: jan, values: [
+            { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 3 }, { key: 'ratio_total', value: ((3/22.0)*100) }] },
+            { key: 'Timmy', values: [{ key: 'count', value: 2 }, { key: 'likes', value: 11 }, { key: 'ratio_total', value: ((11/11.0)*100) }] }
+          ] },
+          { key: feb, values: [
+            { key: 'Tammy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'ratio_total', value: nil }] },
+            { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'ratio_total', value: nil }] }
+          ] },
+          { key: mar, values: [
+            { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 19 }, { key: 'ratio_total', value: ((19/22.0)*100) }] },
+            { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'ratio_total', value: nil }] }
+          ]}
+        ]
       end
     end
   end
@@ -344,12 +357,52 @@ describe Repor::Report do
     end
 
     it 'should return total_data' do
-      expect(report.total_data).to eq [
-        { key: 'totals', values: [
-          { key: 'count', value: 5},
-          { key: 'likes', value: 12}
-        ] }
-      ]
+      expect(report.total_data).to eq({
+        ['totals', 'count'] => 5,
+        ['totals', 'likes'] => 12,
+      })
+    end
+
+    context 'with calculators' do
+      let(:parent_report_class) do
+        Class.new(Repor::Report) do
+          report_on :Post
+          count_aggregator :count
+          sum_aggregator :likes
+          max_aggregator :max_likes, expression: :likes
+          number_dimension :likes
+          category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+          time_dimension :created_at
+        end
+      end
+
+      let(:report_class) do
+        Class.new(Repor::Report) do
+          report_on :Post
+          count_aggregator :count
+          sum_aggregator :likes
+          max_aggregator :max_likes, expression: :likes
+          number_dimension :likes
+          category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+          time_dimension :created_at
+          ratio_calculator :ratio_total, field: :likes
+        end
+      end
+
+      let(:dimensions) { { likes: { bin_width: 1 }, created_at: { bin_width: { months: 1 } }, author: { only: 'Tammy' } } }
+      let(:parent_dimensions) { { likes: { bin_width: 1 }, created_at: { bin_width: { months: 1 } } } }
+      let(:parent_groupers) { %i(author) }
+      let(:calculators) { %i(ratio_total) }
+      let(:parent_report) { parent_report_class.new({groupers: parent_groupers, aggregators: aggregators, dimensions: parent_dimensions}) }
+      let(:report) { report_class.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions, parent_report: parent_report, parent_groupers: parent_groupers, calculators: calculators}) }
+
+      it 'should calculate' do
+        expect(report.total_data).to eq({
+          ['totals', 'count'] => 3,
+          ['totals', 'likes'] => 9,
+          ['totals', 'ratio_total'] => ((9/12.0)*100)
+        })
+      end
     end
   end
 end
