@@ -29,8 +29,7 @@ module Repor
         raise NotImplementedError
       end
 
-      # Return an ordered array of all values that should appear in
-      # `Report#data`
+      # Return an ordered array of all values that should appear in `Report#data`
       def group_values
         raise NotImplementedError
       end
@@ -67,7 +66,7 @@ module Repor
       end
 
       def sort_order
-        sort_desc?? 'DESC' : 'ASC'
+        sort_desc? ? 'DESC' : 'ASC'
       end
 
       def nulls_last?
@@ -78,7 +77,7 @@ module Repor
 
       def null_order
         return unless Repor.database_type == :postgres
-        nulls_last?? 'NULLS LAST' : 'NULLS FIRST'
+        nulls_last? ? 'NULLS LAST' : 'NULLS FIRST'
       end
 
       def params
@@ -91,8 +90,7 @@ module Repor
       end
 
       def invalid_param!(param_key, message)
-        raise InvalidParamsError, "Invalid value for params[:dimensions]" \
-          "[:#{name}][:#{param_key}]: #{message}"
+        raise InvalidParamsError, "Invalid value for params[:dimensions] [:#{name}][:#{param_key}]: #{message}"
       end
 
       def sql_value_name

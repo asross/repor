@@ -5,13 +5,8 @@ module Repor
         super
 
         if params.key?(:bin_width)
-          unless Repor.numeric?(params[:bin_width])
-            invalid_param!(:bin_width, "must be numeric")
-          end
-
-          unless params[:bin_width].to_f > 0
-            invalid_param!(:bin_width, "must be greater than 0")
-          end
+          invalid_param!(:bin_width, 'must be numeric') unless Repor.numeric?(params[:bin_width])
+          invalid_param!(:bin_width, 'must be greater than 0') unless params[:bin_width].to_f > 0
         end
       end
 

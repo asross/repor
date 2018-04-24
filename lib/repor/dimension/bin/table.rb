@@ -25,13 +25,9 @@ INNER JOIN (
   END
 )
           SQL
-          
-          selection = "#{name}.bin_text AS #{value_name}"
 
-          relation.
-            joins(bin_join).
-            select(selection).
-            group(value_name)
+          selection = "#{name}.bin_text AS #{value_name}"
+          relation.joins(bin_join).select(selection).group(value_name)
         end
 
         def rows

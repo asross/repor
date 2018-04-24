@@ -20,18 +20,15 @@ module Repor
       end
 
       def aggregator_field
-        select_tag("#{prefix}[aggregator]",
-          options_for_select(aggregator_options, report.aggregators.keys.first))
+        select_tag("#{prefix}[aggregator]", options_for_select(aggregator_options, report.aggregators.keys.first))
       end
 
       def primary_grouper_field
-        select_tag("#{prefix}[groupers][0]",
-          options_for_select(dimension_options, report.grouper_names[0]))
+        select_tag("#{prefix}[groupers][0]", options_for_select(dimension_options, report.grouper_names[0]))
       end
 
       def secondary_grouper_field
-        select_tag("#{prefix}[groupers][1]",
-          options_for_select([[nil, nil]]+dimension_options, report.grouper_names[1]))
+        select_tag("#{prefix}[groupers][1]", options_for_select([[nil, nil]]+dimension_options, report.grouper_names[1]))
       end
 
       def axis_fields
@@ -62,8 +59,7 @@ module Repor
         end
 
         fields_for(dimension) do
-          select_tag("#{prefix_for(dimension)}[only]",
-            options_for_select(options, dimension.filter_values.first))
+          select_tag("#{prefix_for(dimension)}[only]", options_for_select(options, dimension.filter_values.first))
         end
       end
 
@@ -76,18 +72,15 @@ module Repor
       end
 
       def bin_min_field(dimension)
-        text_field_tag("#{prefix_for(dimension)}[only][min]",
-          dimension.filter_min, placeholder: bin_min_placeholder(dimension))
+        text_field_tag("#{prefix_for(dimension)}[only][min]", dimension.filter_min, placeholder: bin_min_placeholder(dimension))
       end
 
       def bin_max_field(dimension)
-        text_field_tag("#{prefix_for(dimension)}[only][max]",
-          dimension.filter_max, placeholder: bin_max_placeholder(dimension))
+        text_field_tag("#{prefix_for(dimension)}[only][max]", dimension.filter_max, placeholder: bin_max_placeholder(dimension))
       end
 
       def bin_step_field(dimension)
-        text_field_tag("#{prefix_for(dimension)}[bin_width]",
-          dimension.params[:bin_width], placeholder: bin_step_placeholder(dimension))
+        text_field_tag("#{prefix_for(dimension)}[bin_width]", dimension.params[:bin_width], placeholder: bin_step_placeholder(dimension))
       end
 
       def fields_for(dimension, &block)
@@ -106,13 +99,21 @@ module Repor
       end
 
       def dimension_fields_class(dimension)
-        ['repor-dimension-fields',
-         "repor-dimension-fields--#{css_class(dimension.name)}",
-         "repor-dimension-fields--#{css_class(dimension.class.name)}"].join(' ')
+        [
+          'repor-dimension-fields',
+          "repor-dimension-fields--#{css_class(dimension.name)}",
+          "repor-dimension-fields--#{css_class(dimension.class.name)}"
+        ].join(' ')
       end
 
-      def bin_max_placeholder(dimension); 'max'; end
-      def bin_min_placeholder(dimension); 'min'; end
+      def bin_max_placeholder(dimension)
+        'max'
+      end
+
+      def bin_min_placeholder(dimension)
+        'min'
+      end
+
       def bin_step_placeholder(dimension)
         dimension.bin_width.inspect
       end

@@ -120,9 +120,7 @@ module Repor
         bin_edge = self.bin_start
         return bins if bin_edge.blank? || max.blank?
         approx_count = (max - bin_edge)/(bin_width)
-        if approx_count > max_bins
-          invalid_param!(:bin_width, "is too small for the domain; would generate #{approx_count} bins")
-        end
+        invalid_param!(:bin_width, "is too small for the domain; would generate #{approx_count} bins") if approx_count > max_bins
 
         loop do
           break if bin_edge > max
@@ -131,13 +129,13 @@ module Repor
           bins << bin
           bin_edge = bin[:max]
           iters += 1
-          raise "too many bins, likely an internal error" if iters > max_bins
+          raise 'too many bins, likely an internal error' if iters > max_bins
         end
 
         bins.reverse! if sort_desc?
 
         if data_contains_nil?
-          nulls_last?? bins.push(nil) : bins.unshift(nil)
+          nulls_last? ? bins.push(nil) : bins.unshift(nil)
         end
 
         bins

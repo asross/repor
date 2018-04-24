@@ -8,9 +8,7 @@ module Repor
       def validate_params!
         super
 
-        if params.key?(:bin_width) && !valid_duration?(params[:bin_width])
-          invalid_param!(:bin_width, "must be a hash of one of #{STEPS} to an integer")
-        end
+        invalid_param!(:bin_width, "must be a hash of one of #{STEPS} to an integer") if params.key?(:bin_width) && !valid_duration?(params[:bin_width])
       end
 
       def bin_width

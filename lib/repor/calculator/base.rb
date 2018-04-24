@@ -7,7 +7,7 @@ module Repor
         @name = name
         @report = report
         @opts = opts
-        
+
         @field = opts[:field]
         @parent_field = opts[:parent_field] || @field
         @totals = !!opts[:totals]

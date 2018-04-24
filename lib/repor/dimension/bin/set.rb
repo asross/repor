@@ -16,8 +16,7 @@ module Repor
         end
 
         def valid?
-          (@min.nil? || parses?(@min)) &&
-            (@max.nil? || parses?(@max))
+          (@min.nil? || parses?(@min)) && (@max.nil? || parses?(@max))
         end
 
         def parses?(value)

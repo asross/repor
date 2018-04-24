@@ -234,8 +234,7 @@ module Repor
         end
 
         next if parent_report.nil?
-        row_data = {}
-        row_data.merge!(dimensions.keys.zip(dimensions.values.collect { |dimension| obj.attributes[dimension.send(:sql_value_name)] }).to_h)
+        row_data = dimensions.keys.zip(dimensions.values.collect { |dimension| obj.attributes[dimension.send(:sql_value_name)] }).to_h
         row_data.merge!(aggregators.keys.zip(aggregators.values.collect { |aggregator| obj.attributes[aggregator.sql_value_name] || aggregator.default_value }).to_h)
         row_data.symbolize_keys!
 
@@ -279,9 +278,8 @@ module Repor
         if groupers.any?
           { key: x, values: nest_data(groupers, [x]+prefix) }
         else
-          values = []
-          values.push *aggregators.collect { |name, aggregator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || aggregator.default_value ) } }
-          values.push *calculators.collect { |name, calculator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || calculator.default_value ) } }
+          values = aggregators.collect { |name, aggregator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || aggregator.default_value ) } }
+          values.concat calculators.collect { |name, calculator| { key: name.to_s, value: ( raw_data[([x]+prefix+[name.to_s])] || calculator.default_value ) } }
 
           { key: x, values: values }
         end
