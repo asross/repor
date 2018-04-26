@@ -199,6 +199,10 @@ module Repor
       @flat_data ||= flatten_data
     end
 
+    def hashed_data
+      @hashed_data ||= hash_data
+    end
+
     # nested array of
     # [{ key: x3, values: [{ key: x2, values: [{ key: x1, value: y }] }] }]
     def nested_data
@@ -268,6 +272,14 @@ module Repor
           [aggregator_group, (raw_data[aggregator_group] || aggregator.default_value)]
         end
       end.flatten(1).to_h
+    end
+
+    def hash_data
+      group_values.collect do |group|
+        row = grouper_names.zip(group).to_h
+        aggregators.each { |name, aggregator| row[name] = (raw_data[group + [name.to_s]] || aggregator.default_value) }
+        row
+      end
     end
 
     def nest_data(groupers=self.groupers, prefix=[])

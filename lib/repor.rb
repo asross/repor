@@ -41,5 +41,6 @@ require 'repor/serializer/table'
 require 'repor/serializer/csv'
 require 'repor/serializer/form_field'
 require 'repor/serializer/highcharts'
+require 'repor/serializer/hash_table'
 
 require 'repor/report'
