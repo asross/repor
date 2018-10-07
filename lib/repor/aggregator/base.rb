@@ -19,13 +19,11 @@ module Repor
         opts.fetch(:default_value, 0)
       end
 
-      private
-
-      # This is the method any aggregator must implement. It should return a
-      # relation with the aggregator value SELECTed as the `sql_value_name`.
       def aggregate(groups)
-        raise NotImplementedError
+        relate(groups).select("#{function} AS #{sql_value_name}")
       end
+
+      private
 
       def relate(groups)
         relation.call(groups)

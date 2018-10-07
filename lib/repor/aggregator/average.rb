@@ -1,8 +1,8 @@
 module Repor
   module Aggregator
-    class Average < Base
-      def aggregate(groups)
-        relate(groups).select("AVG(#{expression}) AS #{sql_value_name}")
+    class Average < Repor::Aggregator::Base
+      def function
+        "AVG(#{expression})"
       end
     end
   end

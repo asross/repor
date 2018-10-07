@@ -1,8 +1,8 @@
 module Repor
   module Aggregator
-    class Max < Base
-      def aggregate(groups)
-        relate(groups).select("MAX(#{expression}) AS #{sql_value_name}")
+    class Max < Repor::Aggregator::Base
+      def function
+        "MAX(#{expression})"
       end
     end
   end

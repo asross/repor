@@ -1,8 +1,8 @@
 module Repor
   module Aggregator
-    class Count < Base
-      def aggregate(groups)
-        relate(groups).select("COUNT(DISTINCT #{report.table_name}.id) AS #{sql_value_name}")
+    class Count < Repor::Aggregator::Base
+      def function
+        "COUNT(DISTINCT #{report.table_name}.id)"
       end
     end
   end
