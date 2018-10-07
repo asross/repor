@@ -15,32 +15,5 @@ module Repor
   end
 end
 
-require 'repor/invalid_params_error'
-
-require 'repor/aggregator/base'
-require 'repor/aggregator/array'
-require 'repor/aggregator/average'
-require 'repor/aggregator/count'
-require 'repor/aggregator/max'
-require 'repor/aggregator/min'
-require 'repor/aggregator/sum'
-
-require 'repor/calculator/base'
-require 'repor/calculator/ratio'
-
-require 'repor/dimension/base'
-require 'repor/dimension/bin'
-require 'repor/dimension/bin/set'
-require 'repor/dimension/bin/table'
-require 'repor/dimension/time'
-require 'repor/dimension/number'
-require 'repor/dimension/category'
-
-require 'repor/serializer/base'
-require 'repor/serializer/table'
-require 'repor/serializer/csv'
-require 'repor/serializer/form_field'
-require 'repor/serializer/highcharts'
-require 'repor/serializer/hash_table'
-
-require 'repor/report'
+require 'deeply_enumerable'
+Dir.glob(File.join(__dir__, 'repor', '*/')).each { |file| require file.chomp('/') }

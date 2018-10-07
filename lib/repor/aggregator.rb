@@ -1,0 +1,8 @@
+require 'repor/aggregator/base'
+require 'repor/aggregator/array'
+require 'repor/aggregator/average'
+require 'repor/aggregator/count'
+require 'repor/aggregator/max'
+require 'repor/aggregator/min'
+require 'repor/aggregator/ratio'
+require 'repor/aggregator/sum'

@@ -1,0 +1,7 @@
+require 'repor/dimension/base'
+require 'repor/dimension/bin'
+require 'repor/dimension/bin/set'
+require 'repor/dimension/bin/table'
+require 'repor/dimension/time'
+require 'repor/dimension/number'
+require 'repor/dimension/category'
