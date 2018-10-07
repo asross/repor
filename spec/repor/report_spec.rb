@@ -295,7 +295,7 @@ describe Repor::Report do
       end
 
       specify 'there must be at least one defined' do
-        expect { report }.to raise_error Regexp.new('doesn\'t have any dimensions declared')
+        expect { report }.to raise_error Regexp.new('does not declare any dimensions')
       end
     end
   end
@@ -326,7 +326,7 @@ describe Repor::Report do
       end
 
       specify 'there must be at least one defined' do
-        expect { report }.to raise_error Regexp.new('doesn\'t have any aggregators declared')
+        expect { report }.to raise_error Regexp.new('does not declare any aggregators or trackers')
       end
     end
   end

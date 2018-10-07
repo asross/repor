@@ -5,7 +5,7 @@ FactoryBot.define do
 
   [:post, :comment].each do |type|
     factory type do
-      transient { author nil }
+      transient { author { nil } }
 
       before(:create) do |record, evaluator|
         if evaluator.author
