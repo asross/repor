@@ -1,6 +1,6 @@
 module Repor
   module Calculator
-    class Ratio < Base
+    class Ratio < Repor::Calculator::Base
       def initialize(name, report, opts={})
         super
       end
