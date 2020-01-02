@@ -137,9 +137,9 @@ describe 'more complicated case' do
         { key: nil,  values: [
           { key: :count, value: 0 },
           { key: :total_likes, value: 0 },
-          { key: :mean_likes, value: 0 },
-          { key: :min_likes, value: 0 },
-          { key: :max_likes, value: 0 }
+          { key: :mean_likes, value: nil },
+          { key: :min_likes, value: nil },
+          { key: :max_likes, value: nil }
         ] },
         { key: oct, values: [
           { key: :count, value: 1 },
