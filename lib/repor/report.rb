@@ -10,6 +10,9 @@ module Repor
     attr_reader :params, :parent_report, :parent_groupers
 
     def initialize(params = {})
+      @params = params
+
+      # prepare the params for processing
       clean_params
 
       # When using a Calculator you may need the parent report data. Pass in a Repor::Report object when instantiating
@@ -51,7 +54,7 @@ module Repor
     private
 
     def clean_params
-      @params = params.deep_symbolize_keys.deep_dup.compact
+      @params = @params.deep_symbolize_keys.deep_dup.compact
       strip_blank_params unless @params[:strip_blanks] == false
       compact_params
     end
@@ -59,7 +62,7 @@ module Repor
     def strip_blank_params(check_params = @params)
       check_params.delete_if do |_, value|
         case value
-        when Hash then strip_blanks(value)
+        when Hash then strip_blank_params(value)
         when Array then value.reject! { |v| v.try(:blank?) }
         else value
         end.try(:blank?)
