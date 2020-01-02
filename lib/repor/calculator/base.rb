@@ -17,6 +17,10 @@ module Repor
       def totals?
         totals
       end
+
+      def default_value
+        opts.fetch(:default_value, nil)
+      end
     end
   end
 end
