@@ -16,7 +16,7 @@ module Repor
       # What value should be returned if there are no results for a certain key?
       # For count, that's clearly 0; for min/max, that may be less clear.
       def default_value
-        opts.fetch(:default_value, 0)
+        opts.fetch(:default_value, nil)
       end
 
       def aggregate(groups)
