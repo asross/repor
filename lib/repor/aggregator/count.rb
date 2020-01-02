@@ -4,6 +4,10 @@ module Repor
       def function
         "COUNT(DISTINCT #{report.table_name}.id)"
       end
+
+      def default_value
+        super || 0
+      end
     end
   end
 end

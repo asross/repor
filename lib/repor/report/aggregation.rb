@@ -30,24 +30,64 @@ module Repor
       private
 
       def aggregate
+        prior_row = nil
+
         aggregators.values.reduce(groups) do |relation, aggregator|
+          # append each aggregator into the base relation (groups)
           relation.merge(aggregator.aggregate(base_relation))
         end.each_with_object({}) do |obj, results_hash|
+          results_hash_key_prefix = groupers.map { |g| g.extract_sql_value(obj) }
+          current_row = {}
+
+          # collect all aggregator fields into the results_hash from each obj in the base relation
           aggregators.each do |name, aggregator|
-            results_hash[groupers.map { |g| g.extract_sql_value(obj) }.push(name.to_s)] = obj.attributes[aggregator.sql_value_name] || aggregator.default_value
+            aggregated_value = obj.attributes[aggregator.sql_value_name] || aggregator.default_value
+            results_hash[results_hash_key_prefix + [name.to_s]] = aggregated_value
+            current_row[name.to_s] = aggregated_value
           end
 
-          next if parent_report.nil?
-          row_data = dimensions.keys.zip(dimensions.values.collect { |dimension| obj.attributes[dimension.send(:sql_value_name)] }).to_h
-          row_data.merge!(aggregators.keys.zip(aggregators.values.collect { |aggregator| obj.attributes[aggregator.sql_value_name] || aggregator.default_value }).to_h)
-          row_data.symbolize_keys!
+          # append all calculator fields 
+          if parent_report.present?
+            row_data = dimensions.keys.zip(dimensions.values.collect { |dimension| obj.attributes[dimension.send(:sql_value_name)] }).to_h
+            row_data.merge!(aggregators.keys.zip(aggregators.values.collect { |aggregator| obj.attributes[aggregator.sql_value_name] || aggregator.default_value }).to_h)
+            row_data.symbolize_keys!
 
-          calculators.each do |name, calculator|
-            calc_report = calculator.totals? ? parent_report.total_report : parent_report
+            calculators.each do |name, calculator|
+              calc_report = calculator.totals? ? parent_report.total_report : parent_report
+              
+              parent_row, parent_value = match_parent_row_for_calculator(row_data, calc_report, calculator)
+              next if parent_row.nil?
 
-            parent_row, parent_value = match_parent_row_for_calculator(row_data, calc_report, calculator)
-            results_hash[groupers.map { |g| g.extract_sql_value(obj) }.push(name.to_s)] = calculator.evaluate(row_data, hash_raw_row(parent_row, parent_value, calc_report.grouper_names)) unless parent_row.nil?
+              calculated_value = calculator.evaluate(row_data, hash_raw_row(parent_row, parent_value, calc_report.grouper_names)) || calculator.default_value
+              results_hash[results_hash_key_prefix + [name.to_s]] = calculated_value
+              current_row[name.to_s] = calculated_value
+            end
           end
+
+          # append all tracker fields 
+          # next if parent_report.present?
+
+
+          #   order_expression
+
+
+          #   row_data = dimensions.keys.zip(dimensions.values.collect { |dimension| obj.attributes[dimension.send(:sql_value_name)] }).to_h
+          #   row_data.merge!(aggregators.keys.zip(aggregators.values.collect { |aggregator| obj.attributes[aggregator.sql_value_name] || aggregator.default_value }).to_h)
+          #   row_data.symbolize_keys!
+
+          #   calculators.each do |name, calculator|
+          #     calc_report = calculator.totals? ? parent_report.total_report : parent_report
+              
+          #     parent_row, parent_value = match_parent_row_for_calculator(row_data, calc_report, calculator)
+          #     next if parent_row.nil?
+
+          #     calculated_value = calculator.evaluate(row_data, hash_raw_row(parent_row, parent_value, calc_report.grouper_names)) || calculator.default_value
+          #     results_hash[results_hash_key_prefix + [name.to_s]] = calculated_value
+          #     current_row[name.to_s] = calculated_value
+          #   end
+          # end
+
+          prior_row = current_row
         end
       end
 

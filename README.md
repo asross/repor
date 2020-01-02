@@ -50,7 +50,7 @@ end
 report = PostReport.new(
   relation: Post.published,
   groupers: [:author],
-  aggregators: :number_of_posts,
+  aggregators: [:number_of_posts],
   dimensions: {
     likes: {
       only: { min: 4 }
@@ -73,7 +73,7 @@ puts report.data
 
 report = PostReport.new(
   groupers: [:author, :created_at],
-  aggregators: :total_likes,
+  aggregators: [:total_likes],
   dimensions: {
     created_at: {
       only: { min: '1985', max: '1987' },
@@ -131,7 +131,7 @@ useful formats.
 
 Just call `ReportClass.new(params)`, where `params` is a hash with these keys:
 
-- `aggregator` (required) is the name of the aggregator to aggregate by
+- `aggregators` (required) is a list of the names of the aggregator(s) to aggregate by
 - `groupers` (required) is a list of the names of the dimension(s) to group by
 - `relation` (optional) provides an initial scope for the data
 - `dimensions` (optional) holds dimension-specific filter or grouping options
@@ -367,14 +367,14 @@ You can also define your own aggregator type if none of the existing ones meet
 your needs:
 
 ```ruby
-class StandardDeviationAggregator < Repor::Aggregators::BaseAggregator
+class LengthAggregator < Repor::Aggregators::BaseAggregator
   def aggregate(grouped_relation)
     # check out the other aggregators for examples of what to do here.
   end
 end
 
 # then:
-aggregator :sigma_likes, StandardDeviationAggregator, expression: 'posts.likes'
+aggregator :name_length, LengthAggregator, expression: 'posts.name'
 ```
 
 ## Serializing reports
