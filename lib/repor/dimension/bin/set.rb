@@ -2,6 +2,32 @@ module Repor
   module Dimension
     class Bin
       class Set
+        class << self
+          def from_hash(source)
+            # Returns either a bin or nil, depending on whether the input is valid.
+            case source
+            when nil
+              new(nil, nil)
+            when Hash then
+              min, max = source.symbolize_keys.values_at(:min, :max)
+              new(min.presence, max.presence) unless min.blank? && max.blank?
+            else
+              nil
+            end
+          end
+
+          def from_sql(value)
+            case value
+            when /^([^,]+),(.+)$/ then new($1, $2)
+            when /^([^,]+),$/     then new($1, nil)
+            when /^,(.+)$/        then new(nil, $1)
+            when ',', nil         then new(nil, nil)
+            else
+              raise "Unexpected SQL bin format #{value}"
+            end
+          end
+        end
+
         def initialize(min, max)
           @min = min
           @max = max
@@ -53,60 +79,39 @@ module Repor
         end
 
         def contains_sql(expr)
-          if min && max
+          case
+          when min_and_max?
             "(#{expr} >= #{quote(min)} AND #{expr} < #{quote(max)})"
-          elsif max
-            "#{expr} < #{quote(max)}"
-          elsif min
+          when min.present?
             "#{expr} >= #{quote(min)}"
+          when max.present?
+            "#{expr} < #{quote(max)}"
           else
             "#{expr} IS NULL"
           end
         end
 
-        def self.from_sql(value)
-          case value
-          when /^([^,]+),(.+)$/ then new($1, $2)
-          when /^([^,]+),$/     then new($1, nil)
-          when /^,(.+)$/        then new(nil, $1)
-          when ',', nil         then new(nil, nil)
-          else
-            raise "Unexpected SQL bin format #{value}"
-          end
-        end
-
-        def self.from_hash(h)
-          # Returns either a bin or nil, depending on whether
-          # the input is valid.
-          return new(nil, nil) if h.nil?
-          return unless h.is_a?(Hash)
-          min, max = h.symbolize_keys.values_at(:min, :max)
-          return if min.blank? && max.blank?
-          new(min.presence, max.presence)
-        end
-
         def as_json(*)
-          return @as_json if instance_variable_defined?(:@as_json)
-          @as_json = if min && max
+          @as_json ||= case
+          when min_and_max?
             { min: min, max: max }
-          elsif min
+          when min.present?
             { min: min }
-          elsif max
+          when max.present?
             { max: max }
-          else
-            nil
           end
         end
 
         def [](key)
-          return min if key.to_s == 'min'
-          return max if key.to_s == 'max'
+          case key.to_s
+          when 'min' then min
+          when 'max' then max
+          end
         end
 
         def has_key?(key)
-          key.to_s == 'min' || key.to_s == 'max'
+          %w[min max].include?(key.to_s)
         end
-
         alias key? has_key?
 
         def values_at(*keys)
@@ -128,8 +133,13 @@ module Repor
             min == other[:min] && max == other[:max]
           end
         end
-
         alias eql? ==
+
+        private
+
+        def min_and_max?
+          min.present? && max.present?
+        end
       end
     end
   end
