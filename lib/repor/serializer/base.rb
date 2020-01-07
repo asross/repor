@@ -48,17 +48,13 @@ module Repor
       end
 
       def human_number_value_label(dimension, value)
-        begin
-          min, max = value.values_at(:min, :max)
-        rescue
-          min, max = value.min, value.max
-        end
-        if min && max
-          "[#{min.round(2)}, #{max.round(2)})"
-        elsif min
-          ">= #{min.round(2)}"
-        elsif max
-          "< #{max.round(2)}"
+        case value.bin_edges
+        when :min_and_max
+          "[#{value.min.round(2)}, #{value.max.round(2)})"
+        when :min
+          ">= #{value.min.round(2)}"
+        when :max
+          "< #{value.max.round(2)}"
         else
           human_null_value_label(dimension)
         end
@@ -72,16 +68,13 @@ module Repor
       end
 
       def human_time_value_label(dimension, value)
-        min, max = value.min, value.max
-        if min && max
-          time_formats.each do |step, format|
-            return min.strftime(format) if max == min.advance(step => 1)
-          end
-          "#{min} to #{max}"
-        elsif min
-          "after #{min}"
-        elsif max
-          "before #{max}"
+        case value.bin_edges
+        when :min_and_max
+          time_formats.each { |step, format| return value.min.strftime(format) if value.max == value.min.advance(step => 1) } || "#{value.min} to #{value.max}"
+        when :min
+          "after #{value.min}"
+        when :max
+          "before #{value.max}"
         else
           human_null_value_label(dimension)
         end

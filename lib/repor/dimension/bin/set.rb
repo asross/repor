@@ -79,12 +79,12 @@ module Repor
         end
 
         def contains_sql(expr)
-          case
-          when min_and_max?
+          case bin_edges
+          when :min_and_max
             "(#{expr} >= #{quote(min)} AND #{expr} < #{quote(max)})"
-          when min.present?
+          when :min
             "#{expr} >= #{quote(min)}"
-          when max.present?
+          when :max
             "#{expr} < #{quote(max)}"
           else
             "#{expr} IS NULL"
@@ -92,12 +92,12 @@ module Repor
         end
 
         def as_json(*)
-          @as_json ||= case
-          when min_and_max?
+          @as_json ||= case bin_edges
+          when :min_and_max
             { min: min, max: max }
-          when min.present?
+          when :min
             { min: min }
-          when max.present?
+          when :max
             { max: max }
           end
         end
@@ -135,10 +135,26 @@ module Repor
         end
         alias eql? ==
 
+        def bin_edges
+          case 
+          when min_and_max? then :min_and_max
+          when min? then :min
+          when max? then :max
+          end
+        end
+
         private
 
         def min_and_max?
           min.present? && max.present?
+        end
+
+        def min?
+          min.present?
+        end
+
+        def max?
+          max.present?
         end
       end
     end

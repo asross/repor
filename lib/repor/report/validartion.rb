@@ -13,6 +13,7 @@ module Repor
 
       def validate_configuration!
         incomplete_message = ['You must declare at least one aggregator or tracker, and at lease one dimension to initialize a report', 'See the README for more details']
+
         raise Repor::InvalidParamsError, ["#{self.class.name} does not declare any aggregators or trackers"].concat(incomplete_message).join(". ") if aggregators.empty?
         raise Repor::InvalidParamsError, ["#{self.class.name} does not declare any dimensions"].concat(incomplete_message).join(". ") if dimensions.except(:totals).empty?
         raise Repor::InvalidParamsError, 'parent_report must be included in order to process calculations' if calculators.any? && parent_report.nil?
