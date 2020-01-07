@@ -13,17 +13,17 @@ module Repor
         def group(relation, expr, value_name)
           name = "#{value_name}_bin_table"
 
-          bin_join = <<-SQL
-INNER JOIN (
-  #{rows.join(" UNION\n  ")}
-) AS #{name} ON (
-  CASE
-  WHEN #{name}.min IS NULL AND #{name}.max IS NULL THEN (#{expr} IS NULL)
-  WHEN #{name}.min IS NULL THEN (#{expr} < #{name}.max)
-  WHEN #{name}.max IS NULL THEN (#{expr} >= #{name}.min)
-  ELSE ((#{expr} >= #{name}.min) AND (#{expr} < #{name}.max))
-  END
-)
+          bin_join = <<~SQL
+            INNER JOIN (
+              #{rows.join(" UNION\n  ")}
+            ) AS #{name} ON (
+              CASE
+              WHEN #{name}.min IS NULL AND #{name}.max IS NULL THEN (#{expr} IS NULL)
+              WHEN #{name}.min IS NULL THEN (#{expr} < #{name}.max)
+              WHEN #{name}.max IS NULL THEN (#{expr} >= #{name}.min)
+              ELSE ((#{expr} >= #{name}.min) AND (#{expr} < #{name}.max))
+              END
+            )
           SQL
 
           selection = "#{name}.bin_text AS #{value_name}"
