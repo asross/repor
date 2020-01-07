@@ -35,7 +35,7 @@ module Repor
           @dimensions ||= { totals: { axis_class: Dimension::Category, opts: { expression: "'totals'" } } }
         end
 
-        def trackers(name, trackers_class, opts = {})
+        def tracker(name, trackers_class, opts = {})
           trackers[name.to_sym] = { axis_class: trackers_class, opts: opts }
         end
 
