@@ -51,6 +51,10 @@ module Repor
         @calculators ||= build_axes(self.class.calculators.slice(*Array(params[:calculators]).collect(&:to_sym)))
       end
 
+      def trackers
+        @trackers ||= build_axes(self.class.trackers.slice(*Array(params[:trackers]).collect(&:to_sym)))
+      end
+
       def total_report
         @total_report ||= self.class.new(@params.except(:calculators).merge({ groupers: :totals })) unless @total_data.present?
       end
