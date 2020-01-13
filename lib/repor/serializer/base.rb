@@ -1,8 +1,8 @@
+require 'repor/inflector'
+
 module Repor
   module Serializer
     class Base
-      include ActionView::Helpers::TextHelper
-
       attr_reader :report
 
       def initialize(report)
@@ -81,13 +81,13 @@ module Repor
       end
 
       def record_type
-        report.table_name.singularize.humanize
+        report.table_name.singularize(:_gem_repor).humanize
       end
 
       def axis_summary
         y = human_aggregator_label(report.aggregators)
         xes = report.groupers.map(&method(:human_dimension_label))
-        count = pluralize(report.records.count, record_type)
+        count = "#{report.records.count} #{record_type.pluralize(report.records.count, :_gem_repor)}"
         "#{y} by #{xes.to_sentence} for #{count}"
       end
 

@@ -1,9 +1,11 @@
+require 'repor/inflector'
+
 module Repor
   module Dimension
     class Time < Bin
       STEPS = %i(seconds minutes hours days weeks months years)
-      BIN_STEPS = (STEPS - [:seconds]).map { |s| s.to_s.singularize }
-      DURATION_PATTERN = /\A\d+ (?:#{STEPS.map{|s| "#{s}?" }.join('|')})\z/
+      BIN_STEPS = (STEPS - [:seconds]).map { |step| step.to_s.singularize(:_gem_repor) }
+      DURATION_PATTERN = /\A\d+ (?:#{STEPS.map{ |step| "#{step}?" }.join('|')})\z/
 
       def validate_params!
         super
