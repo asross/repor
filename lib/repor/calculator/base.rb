@@ -3,8 +3,6 @@ require 'repor/aggregator/base'
 module Repor
   module Calculator
     class Base < Repor::Aggregator::Base
-      attr_reader :name, :report, :opts
-
       def aggregator
         opts[:aggregator] || name
       end
