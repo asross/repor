@@ -18,6 +18,7 @@ describe Repor::Report do
   let(:parent_report) { nil }
   let(:parent_groupers) { nil }
   let(:calculators) { nil }
+  let(:trackers) { nil }
   let(:report) { report_class.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions, parent_report: parent_report, parent_groupers: parent_groupers, calculators: calculators}.compact) }
 
   let(:jan) { { min: Time.zone.parse('2016-01-01'), max: Time.zone.parse('2016-02-01') } }
@@ -121,28 +122,30 @@ describe Repor::Report do
           number_dimension :likes
           category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
           time_dimension :created_at
-          ratio_calculator :ratio_total, field: :likes
+          ratio_calculator :likes_ratio, aggregator: :likes
+          delta_tracker :likes_delta, expression: :likes
         end
       end
 
       let(:parent_groupers) { %i(author) }
       let(:aggregators) { %i(count likes) }
       let(:parent_report) { report_class.new({groupers: parent_groupers, aggregators: aggregators}) }
-      let(:calculators) { %i(ratio_total) }
+      let(:calculators) { %i(likes_ratio) }
+      let(:trackers) { %i(likes_delta) }
 
       it 'should calculate' do
         expect(report.data).to eq [
           { key: jan, values: [
-            { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 3 }, { key: 'ratio_total', value: ((3/22.0)*100) }] },
-            { key: 'Timmy', values: [{ key: 'count', value: 2 }, { key: 'likes', value: 11 }, { key: 'ratio_total', value: ((11/11.0)*100) }] }
+            { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 3 }, { key: 'likes_ratio', value: ((3/22.0)*100) }] },
+            { key: 'Timmy', values: [{ key: 'count', value: 2 }, { key: 'likes', value: 11 }, { key: 'likes_ratio', value: ((11/11.0)*100) }] }
           ] },
           { key: feb, values: [
-            { key: 'Tammy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'ratio_total', value: nil }] },
-            { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'ratio_total', value: nil }] }
+            { key: 'Tammy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'likes_ratio', value: nil }] },
+            { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'likes_ratio', value: nil }] }
           ] },
           { key: mar, values: [
-            { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 19 }, { key: 'ratio_total', value: ((19/22.0)*100) }] },
-            { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'ratio_total', value: nil }] }
+            { key: 'Tammy', values: [{ key: 'count', value: 1 }, { key: 'likes', value: 19 }, { key: 'likes_ratio', value: ((19/22.0)*100) }] },
+            { key: 'Timmy', values: [{ key: 'count', value: 0 }, { key: 'likes', value: 0 }, { key: 'likes_ratio', value: nil }] }
           ]}
         ]
       end
@@ -168,17 +171,19 @@ describe Repor::Report do
         number_dimension :likes
         category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
         time_dimension :created_at
-        ratio_calculator :ratio_total, field: :likes
+        ratio_calculator :likes_ratio, aggregator: :likes
+        delta_tracker :likes_delta, expression: :likes
       end
     end
 
     let(:parent_groupers) { %i(author) }
     let(:aggregators) { %i(count likes) }
     let(:parent_report) { report_class.new({groupers: parent_groupers, aggregators: aggregators}) }
-    let(:calculators) { %i(ratio_total) }
+    let(:calculators) { %i(likes_ratio) }
+    let(:trackers) { %i(likes_delta) }
 
     it 'should return configured calculators' do
-      expect(report.calculators).to include(:ratio_total)
+      expect(report.calculators).to include(:likes_ratio)
     end
   end
 
@@ -385,14 +390,16 @@ describe Repor::Report do
           number_dimension :likes
           category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
           time_dimension :created_at
-          ratio_calculator :ratio_total, field: :likes
+          ratio_calculator :likes_ratio, aggregator: :likes
+          delta_tracker :likes_delta, expression: :likes
         end
       end
 
       let(:dimensions) { { likes: { bin_width: 1 }, created_at: { bin_width: { months: 1 } }, author: { only: 'Tammy' } } }
       let(:parent_dimensions) { { likes: { bin_width: 1 }, created_at: { bin_width: { months: 1 } } } }
       let(:parent_groupers) { %i(author) }
-      let(:calculators) { %i(ratio_total) }
+      let(:calculators) { %i(likes_ratio) }
+      let(:trackers) { %i(likes_delta) }
       let(:parent_report) { parent_report_class.new({groupers: parent_groupers, aggregators: aggregators, dimensions: parent_dimensions}) }
       let(:report) { report_class.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions, parent_report: parent_report, parent_groupers: parent_groupers, calculators: calculators}) }
 
@@ -400,7 +407,7 @@ describe Repor::Report do
         expect(report.total_data).to eq({
           ['totals', 'count'] => 3,
           ['totals', 'likes'] => 9,
-          ['totals', 'ratio_total'] => ((9/12.0)*100)
+          ['totals', 'likes_ratio'] => ((9/12.0)*100)
         })
       end
     end
