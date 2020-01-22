@@ -1,13 +1,16 @@
 module Repor
   module Dimension
     class Bin < Base
+      MAX_BINS = 2_000
+
       def max_bins
-        2000
+        self.class::MAX_BINS
       end
 
       def min
         @min ||= filter_min || report.records.minimum(expression)
       end
+      alias bin_start min
 
       def max
         @max ||= filter_max || report.records.maximum(expression)
@@ -22,8 +25,7 @@ module Repor
       end
 
       def domain
-        return 0 if min.nil? || max.nil?
-        max - min
+        min.nil? || max.nil? ? 0 : (max - min)
       end
 
       def group_values
@@ -46,48 +48,24 @@ module Repor
         super
 
         if params.key?(:bin_count)
-          unless Repor.numeric?(params[:bin_count])
-            invalid_param!(:bin_count, "must be numeric")
-          end
-
-          unless params[:bin_count].to_i > 0
-            invalid_param!(:bin_count, "must be greater than 0")
-          end
-
-          unless params[:bin_count].to_i <= max_bins
-            invalid_param!(:bin_count, "must be less than #{max_bins}")
-          end
+          invalid_param!(:bin_count, "must be numeric") unless Repor.numeric?(params[:bin_count])
+          invalid_param!(:bin_count, "must be greater than 0") unless params[:bin_count].to_i > 0
+          invalid_param!(:bin_count, "must be less than #{max_bins}") unless params[:bin_count].to_i <= max_bins
         end
 
         if array_param(:bins).present?
-          unless group_values.all?(&:valid?)
-            invalid_param!(:bins, "must be hashes with min/max keys and valid values, or nil")
-          end
+          invalid_param!(:bins, "must be hashes with min/max keys and valid values, or nil") unless group_values.all?(&:valid?)
         end
 
         if array_param(:only).present?
-          unless filter_values.all?(&:valid?)
-            invalid_param!(:only, "must be hashes with min/max keys and valid values, or nil")
-          end
+          invalid_param!(:only, "must be hashes with min/max keys and valid values, or nil") unless filter_values.all?(&:valid?)
         end
-      end
-
-      def bin_width
-        raise NotImplementedError
-      end
-
-      def bin_start
-        self.min
       end
 
       private
 
       def filter_values_for(key)
-        filter_values.each_with_object([]) do |filter, values|
-          if value = filter.send(key)
-            values << value
-          end
-        end
+        filter_values.map { |filter_value| filter_value.send(key) }.compact
       end
 
       def table
@@ -115,28 +93,26 @@ module Repor
       end
 
       def autopopulate_bins
-        iters = 0
+        return [] if bin_start.blank? || max.blank?
+
+        bin_max = filter_values_for(:max).present? ? (max - bin_width) : max
+        
+        bin_count = (bin_max - bin_start)/(bin_width)
+        invalid_param!(:bin_width, "is too small for the domain; would generate #{bin_count} bins") if bin_count > max_bins
+
+        bin_edge = bin_start
         bins = []
-        bin_edge = self.bin_start
-        return bins if bin_edge.blank? || max.blank?
-        approx_count = (max - bin_edge)/(bin_width)
-        invalid_param!(:bin_width, "is too small for the domain; would generate #{approx_count} bins") if approx_count > max_bins
 
         loop do
-          break if bin_edge > max
-          break if bin_edge == max && filter_values_for(:max).present?
+          break if bin_edge > bin_max
+
           bin = { min: bin_edge, max: bin_edge + bin_width }
           bins << bin
           bin_edge = bin[:max]
-          iters += 1
-          raise 'too many bins, likely an internal error' if iters > max_bins
         end
 
         bins.reverse! if sort_desc?
-
-        if data_contains_nil?
-          nulls_last? ? bins.push(nil) : bins.unshift(nil)
-        end
+        ( nulls_last? ? bins.push(nil) : bins.unshift(nil) ) if data_contains_nil?
 
         bins
       end

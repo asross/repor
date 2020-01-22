@@ -1,25 +1,18 @@
+require 'repor/aggregator/base'
+
 module Repor
   module Calculator
-    class Base
-      attr_reader :name, :report, :opts, :field, :parent_field, :totals, :default_value
+    class Base < Repor::Aggregator::Base
+      def aggregator
+        opts[:aggregator] || name
+      end
 
-      def initialize(name, report, opts={})
-        @name = name
-        @report = report
-        @opts = opts
-
-        @field = opts[:field]
-        @parent_field = opts[:parent_field] || @field
-        @totals = !!opts[:totals]
-        @default_value = opts[:default_value]
+      def parent_aggregator
+        opts[:parent_aggregator] || aggregator
       end
 
       def totals?
-        totals
-      end
-
-      def default_value
-        opts.fetch(:default_value, nil)
+        !!opts[:totals]
       end
     end
   end

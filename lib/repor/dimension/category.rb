@@ -13,12 +13,10 @@ module Repor
       end
 
       def group_values
-        if filtering?
-          filter_values
-        else
-          i = report.groupers.index(self)
-          report.raw_data.map { |x, _y| x[i] }.uniq
-        end
+        return filter_values if filtering?
+          
+        i = report.groupers.index(self)
+        report.raw_data.keys.map { |x| x[i] }.uniq
       end
 
       def all_values

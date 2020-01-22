@@ -1,8 +1,8 @@
+require 'repor/inflector'
+
 module Repor
   module Serializer
     class Base
-      include ActionView::Helpers::TextHelper
-
       attr_reader :report
 
       def initialize(report)
@@ -48,17 +48,13 @@ module Repor
       end
 
       def human_number_value_label(dimension, value)
-        begin
-          min, max = value.values_at(:min, :max)
-        rescue
-          min, max = value.min, value.max
-        end
-        if min && max
-          "[#{min.round(2)}, #{max.round(2)})"
-        elsif min
-          ">= #{min.round(2)}"
-        elsif max
-          "< #{max.round(2)}"
+        case value.bin_edges
+        when :min_and_max
+          "[#{value.min.round(2)}, #{value.max.round(2)})"
+        when :min
+          ">= #{value.min.round(2)}"
+        when :max
+          "< #{value.max.round(2)}"
         else
           human_null_value_label(dimension)
         end
@@ -72,29 +68,26 @@ module Repor
       end
 
       def human_time_value_label(dimension, value)
-        min, max = value.min, value.max
-        if min && max
-          time_formats.each do |step, format|
-            return min.strftime(format) if max == min.advance(step => 1)
-          end
-          "#{min} to #{max}"
-        elsif min
-          "after #{min}"
-        elsif max
-          "before #{max}"
+        case value.bin_edges
+        when :min_and_max
+          time_formats.each { |step, format| return value.min.strftime(format) if value.max == value.min.advance(step => 1) } || "#{value.min} to #{value.max}"
+        when :min
+          "after #{value.min}"
+        when :max
+          "before #{value.max}"
         else
           human_null_value_label(dimension)
         end
       end
 
       def record_type
-        report.table_name.singularize.humanize
+        report.table_name.singularize(:_gem_repor).humanize
       end
 
       def axis_summary
         y = human_aggregator_label(report.aggregators)
         xes = report.groupers.map(&method(:human_dimension_label))
-        count = pluralize(report.records.count, record_type)
+        count = "#{report.records.count} #{record_type.pluralize(report.records.count, :_gem_repor)}"
         "#{y} by #{xes.to_sentence} for #{count}"
       end
 
