@@ -27,41 +27,53 @@ module Repor
       end
       alias_method :totals, :total_data
 
-      private
-
-      def aggregate
-        prior_row = {}
-        prior_obj = nil
-        tracker_dimension_key = :_tracker_dimension
-
-        aggregators.values.reduce(groups) do |relation, aggregator|
+      def source_data
+        @source_data ||= aggregators.values.reduce(groups) do |relation, aggregator|
           # append each aggregator into the base relation (groups)
           relation.merge(aggregator.aggregate(base_relation))
-        end.each_with_object({}) do |current_obj, results_hash|
-          results_hash_key_prefix = groupers.map { |g| g.extract_sql_value(current_obj) }
-          current_row = { tracker_dimension_key => results_hash_key_prefix[0..-2] }
+        end
+      end
 
-          # collect all aggregator fields into the results_hash from each current_obj in the base relation
+      private
+
+      def aggregate        
+        tracker_dimension_key = :_tracker_dimension
+
+        if trackable? && trackers.any?
+          prior_obj = prior_bin_report.source_data.first
+          prior_row = prior_bin_report.hashed_data.first.with_indifferent_access
+
+          results_key_prefix = groupers.map { |g| g.extract_sql_value(prior_obj) }
+          prior_row[tracker_dimension_key] = results_key_prefix[0..-2]
+        else
+          prior_obj = nil
+          prior_row = {}
+        end
+
+        source_data.each_with_object({}) do |current_obj, results|
+          # collect all group values and append to results
+          # for the results we store and use as the key prefix for each value
+          results_key_prefix = groupers.map { |g| g.extract_sql_value(current_obj) }
+          # for the current_row appended as individual keys and values to the data object
+          current_row = groupers.collect(&:name).zip(results_key_prefix).to_h.with_indifferent_access
+
+          # collect all aggregator fields into the results from each current_obj in the base relation
           aggregators.each do |name, aggregator|
             aggregated_value = current_obj.attributes[aggregator.sql_value_name] || aggregator.default_value
-            results_hash[results_hash_key_prefix + [name.to_s]] = aggregated_value
+            results[results_key_prefix + [name.to_s]] = aggregated_value
             current_row[name.to_s] = aggregated_value
           end
-
-          row_data = dimensions.keys.zip(dimensions.values.collect { |dimension| current_obj.attributes[dimension.send(:sql_value_name)] }).to_h
-          row_data.merge!(aggregators.keys.zip(aggregators.values.collect { |aggregator| current_obj.attributes[aggregator.sql_value_name] || aggregator.default_value }).to_h)
-          row_data.symbolize_keys!
 
           # append all calculator fields
           if calculable?
             calculators.each do |name, calculator|
               calc_report = calculator.totals? ? parent_report.total_report : parent_report
-              
-              parent_row, parent_value = match_parent_row_for_calculator(row_data, calc_report, calculator)
+
+              parent_row = match_parent_row_for_calculator(current_row, calc_report, calculator)
               next if parent_row.nil?
 
-              calculated_value = calculator.evaluate(row_data, hash_raw_row(parent_row, parent_value, calc_report.grouper_names)) || calculator.default_value
-              results_hash[results_hash_key_prefix + [name.to_s]] = calculated_value
+              calculated_value = calculator.calculate(current_row, parent_row) || calculator.default_value
+              results[results_key_prefix + [name.to_s]] = calculated_value
               current_row[name.to_s] = calculated_value
             end
           end
@@ -75,72 +87,104 @@ module Repor
           # "author.id" value (bin) changes the tracker is reset so we do not track changes from the last day of each
           # "author.id" to the first day of the next "author.id".
           if trackable?
+            current_row[tracker_dimension_key] = results_key_prefix[0..-2]
+
             if current_row[tracker_dimension_key] == prior_row[tracker_dimension_key] && bins_are_adjacent?(current_obj, prior_obj)
               trackers.each do |name, tracker|
-
-
-                # TODO:
-                # Add specs to excercise this code and validate it's working
-
-                calculated_value = tracker.evaluate(row_data, prior_row) || tracker.default_value
-                puts calculated_value.inspect
-                results_hash[results_hash_key_prefix + [name.to_s]] = calculated_value
+                calculated_value = tracker.track(current_row, prior_row) || tracker.default_value
+                results[results_key_prefix + [name.to_s]] = calculated_value
                 current_row[name.to_s] = calculated_value
               end
             end
           end
 
-          prior_obj, prior_row = current_obj, current_row.merge(row_data)
+          prior_obj, prior_row = current_obj, current_row
         end
       end
 
       def flatten_data
-        group_values.map do |group|
+        group_values.each_with_object({}) do |group, results|
           aggregators.map do |name, aggregator|
             aggregator_group = group + [name.to_s]
-            [aggregator_group, (raw_data[aggregator_group] || aggregator.default_value)]
+            results[aggregator_group] = (raw_data[aggregator_group] || aggregator.default_value)
           end
-        end.flatten(1).to_h
+
+          calculators.each do |name, calculator|
+            calculator_group = group + [name.to_s]
+            results[calculator_group] = calculable? ? (raw_data[calculator_group] || calculator.default_value) : nil
+          end
+
+          
+          trackers.each do |name, tracker|
+            tracker_group = group + [name.to_s]
+            results[tracker_group] = trackable? ? (raw_data[tracker_group] || tracker.default_value) : nil
+          end
+        end
       end
 
       def hash_data
         group_values.collect do |group|
           grouper_names.zip(group).to_h.tap do |row|
-            aggregators.each { |name, aggregator| row[name] = (raw_data[group + [name.to_s]] || aggregator.default_value) }
+            aggregators.each do |name, aggregator|
+              row[name] = (raw_data[group + [name.to_s]] || aggregator.default_value)
+            end
+
+            calculators.each do |name, calculator|
+              row[name] = calculable? ? (raw_data[group + [name.to_s]] || calculator.default_value) : nil
+            end
+
+            trackers.each do |name, tracker|
+              row[name] = trackable? ? (raw_data[group + [name.to_s]] || tracker.default_value) : nil
+            end
           end
         end
       end
 
       def nest_data(groupers = self.groupers, prefix = [])
-        groupers = groupers.dup
-        group = groupers.pop
+        nest_groupers = groupers.dup
+        group = nest_groupers.pop
 
         group.group_values.map do |group_value|
-          if groupers.any?
-            { key: group_value, values: nest_data(groupers, [group_value]+prefix) }
-          else
-            values = aggregators.collect { |name, aggregator| { key: name.to_s, value: ( raw_data[([group_value]+prefix+[name.to_s])] || aggregator.default_value ) } }
-            values.concat calculators.collect { |name, calculator| { key: name.to_s, value: ( raw_data[([group_value]+prefix+[name.to_s])] || calculator.default_value ) } }
+          value_prefix = [group_value] + prefix
+          values = []
 
-            { key: group_value, values: values }
+          if nest_groupers.any?
+            values = nest_data(nest_groupers, value_prefix)
+          else
+            aggregators.each do |name, aggregator|
+              value = raw_data[value_prefix+[name.to_s]] || aggregator.default_value
+              values.push({ key: name.to_s, value: value })
+            end
+
+            calculators.each do |name, calculator|
+              value = calculable? ? (raw_data[value_prefix+[name.to_s]] || calculator.default_value) : nil
+              values.push({ key: name.to_s, value: value })
+            end
+
+            trackers.each do |name, tracker|
+              value = trackable? ? (raw_data[value_prefix+[name.to_s]] || tracker.default_value) : nil
+              values.push({ key: name.to_s, value: value })
+            end
           end
+
+          { key: group_value, values: values }
         end
       end
 
       def total
-        results_hash = @total_data || total_report.raw_data
+        results = @total_data || total_report.raw_data
 
-        results_hash.merge!(results_hash.collect do |row, value|
+        results.merge!(results.collect do |row, value|
           calculators.collect do |name, calculator|
             row_data = hash_raw_row(row, value, ['totals'])
             calc_report = parent_report.total_report
 
-            parent_row, parent_value = match_parent_row_for_calculator(row_data, calc_report, calculator)
-            [['totals', name.to_s], calculator.evaluate(row_data, hash_raw_row(parent_row, parent_value, calc_report.grouper_names))] unless parent_row.nil?
+            parent_row = match_parent_row_for_calculator(row_data, calc_report, calculator)
+            [['totals', name.to_s], calculator.calculate(row_data, parent_row)] unless parent_row.nil?
           end
         end.flatten(1).to_h) unless parent_report.nil?
 
-        results_hash
+        results
       end
 
       def group_values
@@ -159,10 +203,7 @@ module Repor
       end
 
       def match_parent_row_for_calculator(row_data, parent_report, calculator)
-        parent_report.flat_data.detect do |parent_row, parent_value|
-          parent_row_data = hash_raw_row(parent_row, parent_value, parent_report.grouper_names)
-          parent_groupers.all? { |g| row_data[g] == parent_row_data[g] } && parent_row_data.include?(calculator.field.to_sym)
-        end
+        parent_report.hashed_data.detect { |parent_row_data| parent_groupers.all? { |g| row_data[g] == parent_row_data[g] } }
       end
 
       def bins_are_adjacent?(obj_a, obj_b, dimension = tracker_dimension)
@@ -195,7 +236,7 @@ module Repor
         return false if bin_a.min == bin_b.min && bin_b.max == bin_a.max
 
         # Do not find two undefined dimensions adjacent
-        return false if [bin_a.min, bin_a.max, bin_b.min, bin_b.max].compact.any?
+        return false if [bin_a.min, bin_a.max, bin_b.min, bin_b.max].compact.none?
 
         # Check if either dimension's min matches the other's max
         bin_a.min == bin_b.max || bin_b.min == bin_a.max
@@ -206,11 +247,23 @@ module Repor
       end
 
       def trackable?
-        @trackable ||= tracker_dimension.is_a?(Repor::Dimension::Bin)
+        @trackable ||= tracker_dimension.is_a?(Repor::Dimension::Bin) && tracker_dimension.min.present?
       end
 
       def tracker_dimension
         @tracker_dimension ||= groupers.last
+      end
+
+      def prior_bin_report
+        @prior_bin_report ||= if trackable? && trackers.any?
+          first_bin_min = tracker_dimension.group_values.first.min
+          prior_bin_params = {
+            dimensions: { tracker_dimension.name => { only: { min: (first_bin_min - tracker_dimension.bin_width), max: first_bin_min }}},
+            trackers: nil
+          }
+          tracker_report_params = params.deep_merge(prior_bin_params)
+          self.class.new(params.merge(tracker_report_params))
+        end
       end
     end
   end
