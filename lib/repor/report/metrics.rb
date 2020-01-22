@@ -55,6 +55,10 @@ module Repor
         @trackers ||= build_axes(self.class.trackers.slice(*Array(params[:trackers]).collect(&:to_sym)))
       end
 
+      def fields
+        [groupers, aggregate_fields].inject(&:merge)
+      end
+
       def total_report
         @total_report ||= self.class.new(@params.except(:calculators).merge({ groupers: :totals })) unless @total_data.present?
       end
