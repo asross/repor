@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.files = Dir['lib/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md']
   s.test_files = Dir['spec/**/*']
 
-  s.add_dependency 'rails', '~> 5.1'
+  s.add_dependency 'rails', '>= 5.1', '< 6.1'
   s.add_dependency 'deeply_enumerable', '>= 0.9.3', '< 2.0'
 
   s.add_development_dependency 'pg', '~> 1'
