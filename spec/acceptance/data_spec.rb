@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'more complicated case' do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
 
@@ -27,7 +27,7 @@ describe 'more complicated case' do
       end
     end
 
-    report = report_class.new(groupers: groupers, dimensions: dimension_params)
+    report = report_model.new(groupers: groupers, dimensions: dimension_params)
     report.data
   end
 

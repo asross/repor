@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Repor::Serializer::Highcharts do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
       number_dimension :likes
@@ -33,7 +33,7 @@ describe Repor::Serializer::Highcharts do
   describe '#series' do
     context 'with one grouper' do
       let(:report) do
-        report_class.new(aggregators: :post_count, groupers: %i[title])
+        report_model.new(aggregators: :post_count, groupers: %i[title])
       end
 
       it 'returns one series of the y values (with filters)' do
@@ -45,7 +45,7 @@ describe Repor::Serializer::Highcharts do
 
     context 'with two groupers' do
       let(:report) do
-        report_class.new(
+        report_model.new(
           aggregators: :post_count,
           groupers: %i[title likes],
           dimensions: { likes: { bin_width: 1 } }
@@ -69,7 +69,7 @@ describe Repor::Serializer::Highcharts do
 
     context 'with three groupers' do
       let(:report) do
-        report_class.new(
+        report_model.new(
           aggregators: :post_count,
           groupers: %i[title likes created_at],
           dimensions: {

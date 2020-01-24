@@ -28,11 +28,11 @@ module Repor
       end
 
       def base_relation
-        params.fetch(:relation, report_class.all)
+        params.fetch(:relation, report_model.all)
       end
 
       def table_name
-        report_class.table_name
+        report_model.table_name
       end
 
       def relation

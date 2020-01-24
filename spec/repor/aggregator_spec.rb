@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Repor::Aggregator do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
       category_dimension :author, expression: 'authors.name', relation: ->(r) { r.left_outer_joins(:author) }
@@ -14,7 +14,7 @@ describe Repor::Aggregator do
     end
   end
 
-  let(:report) { report_class.new(aggregators: aggregators, groupers: [:author]) }
+  let(:report) { report_model.new(aggregators: aggregators, groupers: [:author]) }
 
   let!(:post_1) { create(:post, likes: 3, author: 'Alice') }
   let!(:post_2) { create(:post, likes: 2, author: 'Alice') }

@@ -10,7 +10,7 @@ module Repor
         [type, const_set(type.to_s.upcase, metrics)]
       end.to_h.sort.freeze
 
-      delegate :report_class, to: :class
+      delegate :report_model, to: :class
 
       class_methods do
         # Dimensions define what we are reporting about. For example, some common dimensions would be the Name of the
@@ -110,18 +110,18 @@ module Repor
           end
         end
 
-        def default_report_class
+        def default_report_model
           self.name.demodulize.sub(/Report$/, '').constantize
         rescue NameError
           raise $!, "#{$!} cannot be used as `report_on` class, please configure `report_on` in the report class", $!.backtrace
         end
 
-        def report_class
-          @report_class ||= default_class
+        def report_model
+          @report_model ||= default_class
         end
 
         def report_on(class_or_name)
-          @report_class = class_or_name.to_s.constantize
+          @report_model = class_or_name.to_s.constantize
         rescue NameError
           raise $!, "#{$!} cannot be used as `report_on` class", $!.backtrace
         end
@@ -134,15 +134,15 @@ module Repor
         # autoreporting will automatically define dimensions based on columns
         def autoreport_on(class_or_name)
           report_on class_or_name
-          report_class.columns.each(&method(:autoreport_column))
+          report_model.columns.each(&method(:autoreport_column))
           count_aggregator(:count) if aggregators.blank?
         end
 
         # can override this method to skip or change certain column declarations
         def autoreport_column(column)
-          return if column.name == report_class.primary_key
+          return if column.name == report_model.primary_key
 
-          name, reflection = report_class.reflections.find { |_, reflection| reflection.foreign_key == column.name }
+          name, reflection = report_model.reflections.find { |_, reflection| reflection.foreign_key == column.name }
           case
           when reflection.present?
             column_name = (reflection.klass.column_names & autoreport_association_name_columns(reflection)).first

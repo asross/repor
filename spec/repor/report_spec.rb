@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Repor::Report do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
       count_aggregator :count
@@ -21,7 +21,7 @@ describe Repor::Report do
   let(:parent_groupers) { nil }
   let(:calculators) { nil }
   let(:trackers) { nil }
-  let(:report) { report_class.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions, parent_report: parent_report, parent_groupers: parent_groupers, calculators: calculators, trackers: trackers}.compact) }
+  let(:report) { report_model.new({groupers: groupers, aggregators: aggregators, dimensions: dimensions, parent_report: parent_report, parent_groupers: parent_groupers, calculators: calculators, trackers: trackers}.compact) }
 
   let(:year) { 1.year.ago.year }
   
@@ -36,34 +36,34 @@ describe Repor::Report do
   let(:apr) { { min: apr_datetime, max: apr_datetime.next_month } }
 
   describe '.autoreport_on' do
-    let(:report_class) { Class.new(Repor::Report) { autoreport_on :Post } }
+    let(:report_model) { Class.new(Repor::Report) { autoreport_on :Post } }
 
     it 'infers dimensions from columns' do
-      expect(report_class.dimensions.keys).to include(*%i[created_at updated_at title author likes])
+      expect(report_model.dimensions.keys).to include(*%i[created_at updated_at title author likes])
     end
 
     it "should properly store created_at dimension class" do
-      expect(report_class.dimensions[:created_at][:axis_class]).to eq Repor::Dimension::Time
+      expect(report_model.dimensions[:created_at][:axis_class]).to eq Repor::Dimension::Time
     end
 
     it "should properly store updated_at dimension class" do
-      expect(report_class.dimensions[:updated_at][:axis_class]).to eq Repor::Dimension::Time
+      expect(report_model.dimensions[:updated_at][:axis_class]).to eq Repor::Dimension::Time
     end
 
     it "should properly store likes dimension class" do
-      expect(report_class.dimensions[:likes][:axis_class]).to eq Repor::Dimension::Number
+      expect(report_model.dimensions[:likes][:axis_class]).to eq Repor::Dimension::Number
     end
 
     it "should properly store title dimension class" do
-      expect(report_class.dimensions[:title][:axis_class]).to eq Repor::Dimension::Category
+      expect(report_model.dimensions[:title][:axis_class]).to eq Repor::Dimension::Category
     end
 
     it "should properly store author dimension class" do
-      expect(report_class.dimensions[:author][:axis_class]).to eq Repor::Dimension::Category
+      expect(report_model.dimensions[:author][:axis_class]).to eq Repor::Dimension::Category
     end
 
     it 'should properly store author expression' do
-      expect(report_class.dimensions[:author][:opts][:expression]).to eq 'authors.name'
+      expect(report_model.dimensions[:author][:opts][:expression]).to eq 'authors.name'
     end
   end
 
@@ -184,7 +184,7 @@ describe Repor::Report do
       let(:parent_groupers) { %i(author) }
       let(:parent_dimensions) { { created_at: { only: { min: Date.new(year,1,1).to_s }}} }
       let(:aggregators) { %i(count likes) }
-      let(:parent_report) { report_class.new({groupers: parent_groupers, dimensions: parent_dimensions, aggregators: aggregators}) }
+      let(:parent_report) { report_model.new({groupers: parent_groupers, dimensions: parent_dimensions, aggregators: aggregators}) }
       let(:calculators) { %i(likes_ratio) }
 
       let(:author1_posts) { [author1_jan01_post, author1_jan12_post, author1_mar08_post] }
@@ -333,7 +333,7 @@ describe Repor::Report do
 
   describe '#dimensions' do
     it 'is a curried hash' do
-      expect(report_class.dimensions.keys).to include(:likes, :author, :created_at)
+      expect(report_model.dimensions.keys).to include(:likes, :author, :created_at)
       expect(report.dimensions.keys).to include(:likes, :author, :created_at)
       expect(report.dimensions[:likes]).to be_a Repor::Dimension::Number
       expect(report.dimensions[:author]).to be_a Repor::Dimension::Category
@@ -344,7 +344,7 @@ describe Repor::Report do
   describe '#calculators' do
     let(:parent_groupers) { %i(author) }
     let(:aggregators) { %i(count likes) }
-    let(:parent_report) { report_class.new({groupers: parent_groupers, aggregators: aggregators}) }
+    let(:parent_report) { report_model.new({groupers: parent_groupers, aggregators: aggregators}) }
     let(:calculators) { %i(likes_ratio) }
 
     it 'should return configured calculators' do
@@ -355,7 +355,7 @@ describe Repor::Report do
   describe '#trackers' do
     let(:parent_groupers) { %i(author) }
     let(:aggregators) { %i(count likes) }
-    let(:parent_report) { report_class.new({groupers: parent_groupers, aggregators: aggregators}) }
+    let(:parent_report) { report_model.new({groupers: parent_groupers, aggregators: aggregators}) }
     let(:trackers) { %i(likes_delta) }
 
     it 'should return configured trackers' do
@@ -377,7 +377,7 @@ describe Repor::Report do
     let(:author2_posts) { [author2_post1, author2_post2] }
 
     context 'where author dimension only allows empty string' do
-      let(:report) { report_class.new(dimensions: { author: { only: '' }}) }
+      let(:report) { report_model.new(dimensions: { author: { only: '' }}) }
 
       it 'strips empty string but preserves nil by default' do
         expect(report.params).to be_blank
@@ -387,7 +387,7 @@ describe Repor::Report do
     end
 
     context 'where author dimension only allows array of empty string' do
-      let(:report) { report_class.new(dimensions: { author: { only: [''] }}) }
+      let(:report) { report_model.new(dimensions: { author: { only: [''] }}) }
 
       it 'strips empty string but preserves nil by default' do
         expect(report.params).to be_blank
@@ -397,7 +397,7 @@ describe Repor::Report do
     end
 
     context 'where author dimension only allows empty string or Phil' do
-      let(:report) { report_class.new(dimensions: { author: { only: ['', author1] }}) }
+      let(:report) { report_model.new(dimensions: { author: { only: ['', author1] }}) }
 
       it 'strips empty string but preserves nil by default' do
         expect(report.params).to be_present
@@ -407,7 +407,7 @@ describe Repor::Report do
     end
 
     context 'where author dimension strips blank values and only allows empty string' do
-      let(:report) { report_class.new(strip_blanks: false, dimensions: { author: { only: '' }}) }
+      let(:report) { report_model.new(strip_blanks: false, dimensions: { author: { only: '' }}) }
 
       it 'strips empty string but preserves nil by default' do
         expect(report.params).to be_present
@@ -417,7 +417,7 @@ describe Repor::Report do
     end
 
     context 'where author dimension only allows nil' do
-      let(:report) { report_class.new(dimensions: { author: { only: nil }}) }
+      let(:report) { report_model.new(dimensions: { author: { only: nil }}) }
 
       it 'strips empty string but preserves nil by default' do
         expect(report.params).to be_present
@@ -431,16 +431,16 @@ describe Repor::Report do
     let(:groupers) { %i(author created_at) }
     let(:aggregators) { %i(count likes) }
     let(:dimensions) { { created_at: { bin_width: { months: 1 }}} }
-    let(:parent_report) { report_class.new({ groupers: %i(author), aggregators: aggregators }) }
+    let(:parent_report) { report_model.new({ groupers: %i(author), aggregators: aggregators }) }
 
     it 'should return passed parent report' do
-      expect(report.parent_report).to be_a report_class
+      expect(report.parent_report).to be_a report_model
     end
   end
 
   describe '#aggregators' do
     it 'is a curried hash' do
-      expect(report_class.aggregators.keys).to eq [:count, :likes]
+      expect(report_model.aggregators.keys).to eq [:count, :likes]
       expect(report.aggregators.keys).to eq [:count, :likes]
       expect(report.aggregators[:count]).to be_a Repor::Aggregator::Count
       expect(report.aggregators[:likes]).to be_a Repor::Aggregator::Sum
@@ -477,7 +477,7 @@ describe Repor::Report do
     end
 
     context 'on a report class with no dimensions declared' do
-      let(:report_class) do
+      let(:report_model) do
         Class.new(Repor::Report) do
           report_on :Post
           count_aggregator :count
@@ -508,7 +508,7 @@ describe Repor::Report do
     end
 
     context 'on a report class with no dimensions declared' do
-      let(:report_class) do
+      let(:report_model) do
         Class.new(Repor::Report) do
           report_on :Post
           time_dimension :created_at
@@ -546,7 +546,7 @@ describe Repor::Report do
     end
 
     context 'with calculators' do
-      let(:parent_report_class) do
+      let(:parent_report_model) do
         Class.new(Repor::Report) do
           report_on :Post
           count_aggregator :count
@@ -563,7 +563,7 @@ describe Repor::Report do
       let(:parent_groupers) { %i(author) }
       let(:calculators) { %i(likes_ratio) }
       let(:trackers) { %i(likes_delta) }
-      let(:parent_report) { parent_report_class.new({groupers: parent_groupers, aggregators: aggregators, dimensions: parent_dimensions}) }
+      let(:parent_report) { parent_report_model.new({groupers: parent_groupers, aggregators: aggregators, dimensions: parent_dimensions}) }
 
       let(:author2_posts) { [author2_jan15_post, author2_mar01_post, author2_mar15_post] }
       let(:author2_posts_count) { author2_posts.count }
