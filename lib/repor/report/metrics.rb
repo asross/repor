@@ -1,6 +1,8 @@
 module Repor
   class Report
     module Metrics
+      delegate :table_name, to: :report_model
+
       def dimensions
         @dimensions ||= build_axes(self.class.dimensions)
       end
@@ -29,10 +31,6 @@ module Repor
 
       def base_relation
         params.fetch(:relation, report_model.all)
-      end
-
-      def table_name
-        report_model.table_name
       end
 
       def relation
