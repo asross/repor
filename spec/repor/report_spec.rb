@@ -7,7 +7,7 @@ describe Repor::Report do
       count_aggregator :count
       sum_aggregator :likes
       number_dimension :likes
-      category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+      category_dimension :author, model: :author, attribute: :name, relation: ->(r) { r.joins(:author) }
       time_dimension :created_at
       ratio_calculator :likes_ratio, aggregator: :likes
       delta_tracker :likes_delta, aggregator: :likes
@@ -62,8 +62,23 @@ describe Repor::Report do
       expect(report_model.dimensions[:author][:axis_class]).to eq Repor::Dimension::Category
     end
 
-    it 'should properly store author expression' do
-      expect(report_model.dimensions[:author][:opts][:expression]).to eq 'authors.name'
+    context 'with expression' do
+      let!(:report_model) do
+        Class.new(Repor::Report) do
+          report_on :Post
+          count_aggregator :count
+          sum_aggregator :likes
+          number_dimension :likes
+          category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+          time_dimension :created_at
+          ratio_calculator :likes_ratio, aggregator: :likes
+          delta_tracker :likes_delta, aggregator: :likes
+        end
+      end
+
+      it 'should properly store author expression' do
+        expect(report_model.dimensions[:author][:opts][:expression]).to eq 'authors.name'
+      end
     end
   end
 
@@ -551,9 +566,9 @@ describe Repor::Report do
           report_on :Post
           count_aggregator :count
           sum_aggregator :likes
-          max_aggregator :max_likes, expression: :likes
+          max_aggregator :max_likes, attribute: :likes
           number_dimension :likes
-          category_dimension :author, expression: 'authors.name', relation: ->(r) { r.joins(:author) }
+          category_dimension :author, model: :author, attribute: :name, relation: ->(r) { r.joins(:author) }
           time_dimension :created_at
         end
       end

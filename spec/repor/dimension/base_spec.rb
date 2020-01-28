@@ -95,7 +95,7 @@ describe Repor::Dimension::Base do
     end
 
     it 'can be overridden' do
-      dimension = new_dimension({}, {}, expression: 'baz.bat')
+      dimension = new_dimension({}, {}, table_name: :baz, attribute: :bat)
       expect(dimension.expression).to eq 'baz.bat'
     end
   end

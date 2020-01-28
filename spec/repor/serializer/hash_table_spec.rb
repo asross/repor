@@ -8,7 +8,7 @@ describe Repor::Serializer::HashTable do
       time_dimension :created_at
       category_dimension :title
       count_aggregator :post_count
-      sum_aggregator :likes_count, expression: :likes
+      sum_aggregator :likes_count, attribute: :likes
     end
   end
 

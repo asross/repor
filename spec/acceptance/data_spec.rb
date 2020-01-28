@@ -7,13 +7,13 @@ describe 'more complicated case' do
 
       time_dimension :created_at
       number_dimension :likes
-      category_dimension :author, expression: 'authors.name', relation: ->(r) { r.left_outer_joins(:author) }
+      category_dimension :author, model: :author, attribute: :name, relation: ->(r) { r.left_outer_joins(:author) }
 
       count_aggregator :count
-      sum_aggregator :total_likes, expression: 'posts.likes'
-      average_aggregator :mean_likes, expression: 'posts.likes'
-      min_aggregator :min_likes, expression: 'posts.likes'
-      max_aggregator :max_likes, expression: 'posts.likes'
+      sum_aggregator :total_likes, attribute: :likes
+      average_aggregator :mean_likes, attribute: :likes
+      min_aggregator :min_likes, attribute: :likes
+      max_aggregator :max_likes, attribute: :likes
     end
   end
 
