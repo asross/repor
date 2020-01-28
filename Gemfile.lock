@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    repor (0.4.1)
+    repor (0.5.0)
       deeply_enumerable (>= 0.9.3, < 2.0)
       rails (>= 5.1, < 6.1)
 
