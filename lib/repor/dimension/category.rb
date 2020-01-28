@@ -1,3 +1,5 @@
+require 'repor/dimension/base'
+
 module Repor
   module Dimension
     class Category < Base

@@ -1,4 +1,5 @@
 require 'repor/inflector'
+require 'repor/dimension/bin'
 
 module Repor
   module Dimension

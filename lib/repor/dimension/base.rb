@@ -10,8 +10,21 @@ module Repor
         validate_params!
       end
 
+      def model
+        return @model unless @model.nil?
+
+        @model = opts[:model].to_s.classify.constantize rescue opts[:model]
+        @model = report.report_model if @model.nil?
+
+        @model
+      end
+
+      def attribute
+        opts.fetch(:attribute, name)
+      end
+
       def expression
-        opts.fetch(:expression, "#{report.table_name}.#{name}")
+        @expression ||= opts[:expression] || opts[:_expression] || "#{table_name}.#{column}"
       end
 
       # Do any joins/selects necessary to filter or group the relation.
@@ -87,10 +100,28 @@ module Repor
       private
 
       def validate_params!
+        if opts.include?(:expression)
+          ActiveSupport::Deprecation.warn("passing an :expression option will be deprecated in version 1.0\n  please use :attribute, and, when required, :model or :table_name")
+        end
       end
 
       def invalid_param!(param_key, message)
         raise InvalidParamsError, "Invalid value for params[:dimensions] [:#{name}][:#{param_key}]: #{message}"
+      end
+
+      def table_name
+        return @table_name unless @table_name.nil?
+
+        @table_name = opts[:table_name]
+        @table_name = model.try(:table_name) if @table_name.nil?
+        @table_name = model.to_s.constantize.try(:table_name) rescue nil if @table_name.nil?
+        @table_name = report.table_name if @table_name.nil?
+
+        @table_name
+      end
+
+      def column
+        opts.fetch(:column, attribute)
       end
 
       def sql_value_name
@@ -109,6 +140,10 @@ module Repor
         return [] unless params.key?(key)
         return [nil] if params[key].nil?
         Array.wrap(params[key])
+      end
+
+      def enum?
+        false # Hash(model&.defined_enums).include?(attribute.to_s)
       end
     end
   end

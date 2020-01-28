@@ -1,19 +1,19 @@
 require 'spec_helper'
 
 describe Repor::Serializer::HashTable do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
       number_dimension :likes
       time_dimension :created_at
       category_dimension :title
       count_aggregator :post_count
-      sum_aggregator :likes_count, expression: :likes
+      sum_aggregator :likes_count, attribute: :likes
     end
   end
 
   let(:report) do
-    report_class.new(
+    report_model.new(
       aggregators: [:post_count, :likes_count],
       groupers: %i[title created_at],
       dimensions: { created_at: { bin_width: '1 day' } }

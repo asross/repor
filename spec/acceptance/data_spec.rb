@@ -1,19 +1,19 @@
 require 'spec_helper'
 
 describe 'more complicated case' do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
 
       time_dimension :created_at
       number_dimension :likes
-      category_dimension :author, expression: 'authors.name', relation: ->(r) { r.left_outer_joins(:author) }
+      category_dimension :author, model: :author, attribute: :name, relation: ->(r) { r.left_outer_joins(:author) }
 
       count_aggregator :count
-      sum_aggregator :total_likes, expression: 'posts.likes'
-      average_aggregator :mean_likes, expression: 'posts.likes'
-      min_aggregator :min_likes, expression: 'posts.likes'
-      max_aggregator :max_likes, expression: 'posts.likes'
+      sum_aggregator :total_likes, attribute: :likes
+      average_aggregator :mean_likes, attribute: :likes
+      min_aggregator :min_likes, attribute: :likes
+      max_aggregator :max_likes, attribute: :likes
     end
   end
 
@@ -27,7 +27,7 @@ describe 'more complicated case' do
       end
     end
 
-    report = report_class.new(groupers: groupers, dimensions: dimension_params)
+    report = report_model.new(groupers: groupers, dimensions: dimension_params)
     report.data
   end
 

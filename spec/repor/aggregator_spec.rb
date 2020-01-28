@@ -1,20 +1,21 @@
 require 'spec_helper'
 
 describe Repor::Aggregator do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
-      category_dimension :author, expression: 'authors.name', relation: ->(r) { r.left_outer_joins(:author) }
+      category_dimension :author, model: :author, attribute: :name, relation: ->(r) { r.left_outer_joins(:author) }
+      enum_dimension :status, attribute: :status
       count_aggregator :count
-      sum_aggregator :total_likes, expression: 'posts.likes'
-      average_aggregator :mean_likes, expression: 'posts.likes'
-      min_aggregator :min_likes, expression: 'posts.likes'
-      max_aggregator :max_likes, expression: 'posts.likes'
-      array_aggregator :post_ids, expression: 'posts.id'
+      sum_aggregator :total_likes, attribute: :likes
+      average_aggregator :mean_likes, attribute: :likes
+      min_aggregator :min_likes, attribute: :likes
+      max_aggregator :max_likes, attribute: :likes
+      array_aggregator :post_ids, attribute: :id
     end
   end
 
-  let(:report) { report_class.new(aggregators: aggregators, groupers: [:author]) }
+  let(:report) { report_model.new(aggregators: aggregators, groupers: [:author, :status]) }
 
   let!(:post_1) { create(:post, likes: 3, author: 'Alice') }
   let!(:post_2) { create(:post, likes: 2, author: 'Alice') }
@@ -29,9 +30,9 @@ describe Repor::Aggregator do
     it 'should return post_ids values' do
       if Repor.database_type == :postgres
         expect(report.raw_data).to eq({
-          ['Alice', 'post_ids'] => [post_1.id, post_2.id],
-          ['Bob', 'post_ids'] => [post_3.id, post_4.id, post_5.id],
-          ['Chester', 'post_ids'] => [post_6.id],
+          ['Alice', 'published', 'post_ids'] => [post_1.id, post_2.id],
+          ['Bob', 'published', 'post_ids'] => [post_3.id, post_4.id, post_5.id],
+          ['Chester', 'published', 'post_ids'] => [post_6.id],
         })
       else
         expect { data_for(:post_ids) }.to raise_error(Repor::InvalidParamsError)
@@ -44,9 +45,9 @@ describe Repor::Aggregator do
 
     it 'should return max_likes values' do
       expect(report.raw_data).to eq({
-        ['Alice', 'max_likes'] => 3,
-        ['Bob', 'max_likes'] => 5,
-        ['Chester', 'max_likes'] => 10,
+        ['Alice', 'published', 'max_likes'] => 3,
+        ['Bob', 'published', 'max_likes'] => 5,
+        ['Chester', 'published', 'max_likes'] => 10,
       })
     end
   end
@@ -56,9 +57,9 @@ describe Repor::Aggregator do
 
     it 'should return min_likes values' do
       expect(report.raw_data).to eq({
-        ['Alice', 'min_likes'] => 2,
-        ['Bob', 'min_likes'] => 1,
-        ['Chester', 'min_likes'] => 10
+        ['Alice', 'published', 'min_likes'] => 2,
+        ['Bob', 'published', 'min_likes'] => 1,
+        ['Chester', 'published', 'min_likes'] => 10
       })
     end
   end
@@ -68,9 +69,9 @@ describe Repor::Aggregator do
 
     it 'should return mean_likes values' do
       expect(report.raw_data.collect{ |k,v| [k, v.round(2)] }.to_h).to eq({
-        ['Alice', 'mean_likes'] => 2.50,
-        ['Bob', 'mean_likes'] => 3.33,
-        ['Chester', 'mean_likes'] => 10.00,
+        ['Alice', 'published', 'mean_likes'] => 2.50,
+        ['Bob', 'published', 'mean_likes'] => 3.33,
+        ['Chester', 'published', 'mean_likes'] => 10.00,
       })
     end
   end
@@ -80,9 +81,9 @@ describe Repor::Aggregator do
 
     it 'should return total_likes values' do
       expect(report.raw_data).to eq({
-        ['Alice', 'total_likes'] => 5,
-        ['Bob', 'total_likes'] => 10,
-        ['Chester', 'total_likes'] => 10
+        ['Alice', 'published', 'total_likes'] => 5,
+        ['Bob', 'published', 'total_likes'] => 10,
+        ['Chester', 'published', 'total_likes'] => 10
       })
     end
   end
@@ -92,9 +93,9 @@ describe Repor::Aggregator do
 
     it 'should return count values' do
       expect(report.raw_data).to eq({
-        ['Alice', 'count'] => 2,
-        ['Bob', 'count'] => 3,
-        ['Chester', 'count'] => 1
+        ['Alice', 'published', 'count'] => 2,
+        ['Bob', 'published', 'count'] => 3,
+        ['Chester', 'published', 'count'] => 1
       })
     end
   end

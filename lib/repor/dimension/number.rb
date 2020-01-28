@@ -1,3 +1,5 @@
+require 'repor/dimension/bin'
+
 module Repor
   module Dimension
     class Number < Bin

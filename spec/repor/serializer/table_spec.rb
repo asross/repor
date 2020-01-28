@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Repor::Serializer::Table do
-  let(:report_class) do
+  let(:report_model) do
     Class.new(Repor::Report) do
       report_on :Post
       number_dimension :likes
@@ -12,7 +12,7 @@ describe Repor::Serializer::Table do
   end
 
   let(:report) do
-    report_class.new(
+    report_model.new(
       aggregators: :post_count,
       groupers: %i[created_at likes title],
       dimensions: {

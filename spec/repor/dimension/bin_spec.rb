@@ -32,7 +32,7 @@ describe Repor::Dimension::Bin do
     it 'falls back to the smallest value in the data' do
       dimension = Repor::Dimension::Bin.new(:likes,
         OpenStruct.new(records: Post, params: {}),
-        expression: 'posts.likes'
+        model: :post, attribute: :likes
       )
       expect(dimension.min).to be_nil
       expect(dimension.max).to be_nil

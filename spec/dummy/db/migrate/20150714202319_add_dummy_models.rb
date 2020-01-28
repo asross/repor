@@ -4,6 +4,7 @@ class AddDummyModels < ActiveRecord::Migration
       t.timestamps
       t.string :title
       t.integer :author_id
+      t.integer :status, null: false, default: 0
       t.integer :likes, null: false, default: 0
     end
 
