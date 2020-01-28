@@ -31,7 +31,7 @@ module Repor
         end
 
         def dimensions
-          @dimensions ||= { totals: { axis_class: Dimension::Category, opts: { expression: "'totals'" } } }
+          @dimensions ||= { totals: { axis_class: Dimension::Category, opts: { _expression: "'totals'" } } }
         end
 
         # Aggregators calculate the statistical data for the report into each dimension group. After grouping the data
@@ -111,13 +111,17 @@ module Repor
         end
 
         def default_report_model
-          self.name.demodulize.sub(/Report$/, '').constantize
+          name.demodulize.sub(/Report$/, '').constantize
         rescue NameError
           raise $!, "#{$!} cannot be used as `report_on` class, please configure `report_on` in the report class", $!.backtrace
         end
 
+        def default_model
+          name.demodulize.sub(/Report$/, '').constantize
+        end
+
         def report_model
-          @report_model ||= default_class
+          @report_model ||= default_model
         end
 
         def report_on(class_or_name)
