@@ -82,7 +82,8 @@ class DataBuilder
           title: title,
           created_at: gaussian(100, 40).days.ago,
           likes: gaussian(*likeability_for[author][title]).to_i,
-          author: author
+          author: author,
+          status: :published
         )
 
         gaussian(8, 4).to_i.times do

@@ -32,6 +32,7 @@ ActiveRecord::Schema.define(version: 20150714202319) do
     t.datetime "updated_at"
     t.string   "title"
     t.integer  "author_id"
+    t.integer "status",      default: 0, null: false
     t.integer  "likes",      default: 0, null: false
   end
 
