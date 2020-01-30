@@ -8,6 +8,12 @@ module Repor
       def default_value
         super || 0
       end
+
+      private
+
+      def column
+        super || 'id'
+      end
     end
   end
 end
