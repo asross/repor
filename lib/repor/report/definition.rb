@@ -100,6 +100,15 @@ module Repor
           @trackers ||= {}
         end
 
+        def available_dimensions
+          dimensions.keys
+        end
+        alias_method :available_groupers, :available_dimensions
+
+        def available_aggregators
+          aggregators.keys + calculators.keys + trackers.keys
+        end
+
         METRICS.each do |type, mertics|
           mertics.each do |mertic|
             class_eval <<-METRIC_HELPERS, __FILE__, __LINE__ + 1
