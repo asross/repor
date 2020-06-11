@@ -68,7 +68,7 @@ module Repor
         when Hash then strip_blank_params(value)
         when Array then value.reject! { |v| v.try(:blank?) }
         else value
-        end.try(:blank?)
+        end.try(:blank?) unless value.is_a?(ActiveRecord::Relation)
       end
     end
 
