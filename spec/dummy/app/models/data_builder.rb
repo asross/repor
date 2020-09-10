@@ -63,10 +63,10 @@ class DataBuilder
         h[author] = [average_likes, stddev_likes]
       end
       
-      likeability_for = Hash.new { |h, author|
-        h[author] = Hash.new { |hh, title|
-          l = author_likeability[author]
-          hh[title] = [l[0] * (1+rand), l[1]]
+      likeability_for = Hash.new { |author_hash, author|
+        author_hash[author] = Hash.new { |title_hash, title|
+          average_likes, stddev_likes = author_likeability[author]
+          title_hash[title] = [average_likes * (1+rand), stddev_likes]
         }
       }
 
@@ -78,16 +78,33 @@ class DataBuilder
           author = authors[author_index % authors.length]
         end
 
+        created_at = gaussian(100, 40).days.ago
+        likes = gaussian(*likeability_for[author][title]).to_i
+        status = Post.statuses.values.sample
+        published_at = created_at if [:published, :archived].include?(status)
+        category = Post.categories.values.push(nil).sample
+
         post = Post.create!(
           title: title,
-          created_at: gaussian(100, 40).days.ago,
-          likes: gaussian(*likeability_for[author][title]).to_i,
+          created_at: created_at,
+          likes: likes,
           author: author,
-          status: :published
+          status: status,
+          published_at: published_at,
+          category: category,
         )
 
         gaussian(8, 4).to_i.times do
-          Comment.create!(post: post, likes: gaussian(5, 2).to_i, author: authors.sample, created_at: post.created_at + gaussian(10, 5).days)
+          likes = gaussian(5, 2).to_i
+          author = authors.sample
+          created_at = post.created_at + gaussian(10, 5).days
+
+          Comment.create!(
+            post: post,
+            likes: likes,
+            author: author,
+            created_at: created_at
+          )
         end
       end
     end

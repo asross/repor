@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    repor (0.5.3)
+    repor (0.5.4)
       deeply_enumerable (>= 0.9.3, < 2.0)
       rails (>= 5.1, < 6.1)
 
@@ -96,7 +96,7 @@ GEM
     mini_portile2 (2.4.0)
     minitest (5.14.1)
     mysql2 (0.5.3)
-    nio4r (2.5.2)
+    nio4r (2.5.3)
     nokogiri (1.10.9)
       mini_portile2 (~> 2.4.0)
     pg (1.2.3)
@@ -166,7 +166,7 @@ GEM
     thread_safe (0.3.6)
     tzinfo (1.2.7)
       thread_safe (~> 0.1)
-    websocket-driver (0.7.2)
+    websocket-driver (0.7.3)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
     zeitwerk (2.3.0)
