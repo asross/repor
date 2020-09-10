@@ -5,7 +5,7 @@ describe 'more complicated case' do
     Class.new(Repor::Report) do
       report_on :Post
 
-      time_dimension :created_at
+      time_dimension :published_at
       number_dimension :likes
       category_dimension :author, model: :author, attribute: :name, relation: ->(r) { r.left_outer_joins(:author) }
 
@@ -45,17 +45,17 @@ describe 'more complicated case' do
   let(:oct) { { min: oct_1, max: nov_1 } }
   let(:nov) { { min: nov_1, max: dec_1 } }
 
-  let!(:post_1) { create(:post, author: joyce.name, created_at: oct_1, likes: 1) }
-  let!(:post_2) { create(:post, author: joyce.name, created_at: oct_1, likes: 2) }
-  let!(:post_3) { create(:post, author: joyce.name, created_at: nov_1, likes: 1) }
-  let!(:post_4) { create(:post, author: joyce.name, likes: 3).tap { |p| p.update!(created_at: nil) } }
+  let!(:post_1) { create(:post, author: joyce.name, published_at: oct_1, likes: 1) }
+  let!(:post_2) { create(:post, author: joyce.name, published_at: oct_1, likes: 2) }
+  let!(:post_3) { create(:post, author: joyce.name, published_at: nov_1, likes: 1) }
+  let!(:post_4) { create(:post, author: joyce.name, likes: 3).tap { |p| p.update!(published_at: nil) } }
 
-  let!(:post_5) { create(:post, author: woolf.name, created_at: oct_1, likes: 2) }
-  let!(:post_6) { create(:post, author: woolf.name, created_at: nov_1, likes: 3) }
-  let!(:post_7) { create(:post, author: woolf.name, likes: 3).tap { |p| p.update!(created_at: nil) } }
+  let!(:post_5) { create(:post, author: woolf.name, published_at: oct_1, likes: 2) }
+  let!(:post_6) { create(:post, author: woolf.name, published_at: nov_1, likes: 3) }
+  let!(:post_7) { create(:post, author: woolf.name, likes: 3).tap { |p| p.update!(published_at: nil) } }
 
-  let!(:post_8) { create(:post, author: nil, created_at: oct_1, likes: 2) }
-  let!(:post_9) { create(:post, author: nil, created_at: nov_1, likes: 3) }
+  let!(:post_8) { create(:post, author: nil, published_at: oct_1, likes: 2) }
+  let!(:post_9) { create(:post, author: nil, published_at: nov_1, likes: 3) }
 
   specify 'basic grouping, 1 grouper, no filters' do
     expect_equal data_by(:author), [
@@ -82,7 +82,7 @@ describe 'more complicated case' do
       ] }
     ]
 
-    expect_equal data_by(:created_at, bin_width: '1 month'), [
+    expect_equal data_by(:published_at, bin_width: '1 month'), [
       { key: nil, values: [
         { key: :count, value: 2 },
         { key: :total_likes, value: 6 },
@@ -132,7 +132,7 @@ describe 'more complicated case' do
   end
 
   specify 'basic grouping, >=2 groupers, no filters' do
-    expect_equal data_by([:created_at, :author], bin_width: { months: 1 }), [
+    expect_equal data_by([:published_at, :author], bin_width: { months: 1 }), [
       { key: nil, values: [
         { key: nil,  values: [
           { key: :count, value: 0 },
@@ -230,7 +230,7 @@ describe 'more complicated case' do
       ] }
     ]
 
-    expect_equal data_by(:created_at, bin_width: '1 month', sort_desc: true), [
+    expect_equal data_by(:published_at, bin_width: '1 month', sort_desc: true), [
       { key: nov, values: [
         { key: :count, value: 3 },
         { key: :total_likes, value: 7 },
@@ -303,7 +303,7 @@ describe 'more complicated case' do
         ] }
       ]
 
-      expect_equal data_by(:created_at, bin_width: '1 month', nulls_last: true), [
+      expect_equal data_by(:published_at, bin_width: '1 month', nulls_last: true), [
         { key: oct, values: [
           { key: :count, value: 4 },
           { key: :total_likes, value: 7 },
@@ -327,7 +327,7 @@ describe 'more complicated case' do
         ] }
       ]
 
-      expect_equal data_by(:created_at, bin_width: '1 month', sort_desc: true, nulls_last: true), [
+      expect_equal data_by(:published_at, bin_width: '1 month', sort_desc: true, nulls_last: true), [
         { key: nil, values: [
           { key: :count, value: 2 },
           { key: :total_likes, value: 6 },
