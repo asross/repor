@@ -7,7 +7,7 @@ module Repor
         return filter_values if filtering?
 
         i = report.groupers.index(self)
-        enum_values.invert.reverse_merge(nil => nil).slice(*report.raw_data.keys.map { |x| x[i] }.uniq).values
+        all_values & report.raw_data.keys.map { |x| x[0] }.uniq
       end
 
       def all_values

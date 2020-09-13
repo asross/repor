@@ -16,7 +16,7 @@ module Repor
 
       def group_values
         return filter_values if filtering?
-          
+
         i = report.groupers.index(self)
         report.raw_data.keys.map { |x| x[i] }.uniq
       end
