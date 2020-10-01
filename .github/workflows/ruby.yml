@@ -30,4 +30,4 @@ jobs:
     - name: Install dependencies
       run: bundle install
     - name: Run pecs
-      run: bundle exec spec
+      run: bundle exec rspec
