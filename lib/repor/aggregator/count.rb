@@ -2,7 +2,7 @@ module Repor
   module Aggregator
     class Count < Repor::Aggregator::Base
       def function
-        "COUNT(DISTINCT #{report.table_name}.id)"
+        "COUNT(#{'DISTINCT' if distinct} #{expression})"
       end
 
       def default_value
@@ -11,8 +11,12 @@ module Repor
 
       private
 
+      def distinct
+        opts[:distinct] || true
+      end
+
       def column
-        super || 'id'
+        opts.fetch(:column, 'id')
       end
     end
   end
