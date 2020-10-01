@@ -6,6 +6,10 @@ module Repor
       def aggregator
         opts[:aggregator] || name
       end
+
+      def prior_aggregator
+        opts[:prior_aggregator] || aggregator
+      end
     end
   end
 end
