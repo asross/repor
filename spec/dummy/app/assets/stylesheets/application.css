@@ -20,7 +20,7 @@ h2 { margin: 0; }
 form { margin-top: 1em; margin-bottom: 2em; }
 table { width: 100%; }
 select { margin-top: 2px; margin-bottom: 1px; }
-.repor-axis-fields { margin-bottom: 1em; }
-.repor-dimension-fields--number-dimension input { width: 5em; }
-.repor-dimension-fields--time-dimension input { width: 10em; }
-.repor-dimension-fields--time-dimension input:nth-child(4) { width: 5em; }
+.active-reporter-axis-fields { margin-bottom: 1em; }
+.active-reporter-dimension-fields--number-dimension input { width: 5em; }
+.active-reporter-dimension-fields--time-dimension input { width: 10em; }
+.active-reporter-dimension-fields--time-dimension input:nth-child(4) { width: 5em; }

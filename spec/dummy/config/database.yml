@@ -14,9 +14,9 @@ defaults: &defaults
   <<: *<%= ENV['DB'] || 'postgres' %>
 
 development:
-  database: <%= ENV['DB'] == 'sqlite' ? 'db/development.sqlite3' : 'repor_development' %>
+  database: <%= ENV['DB'] == 'sqlite' ? 'db/development.sqlite3' : 'active_reporter_development' %>
   <<: *defaults
 
 test:
-  database: <%= ENV['DB'] == 'sqlite' ? 'db/test.sqlite3' : 'repor_test' %>
+  database: <%= ENV['DB'] == 'sqlite' ? 'db/test.sqlite3' : 'active_reporter_test' %>
   <<: *defaults

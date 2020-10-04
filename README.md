@@ -1,11 +1,13 @@
-# Repor [![Build Status](https://api.travis-ci.org/asross/repor.svg?branch=master)](https://travis-ci.org/asross/repor)
+# ActiveReporter [![Actions Status](https://github.com/chaunce/repor/workflows/Ruby/badge.svg)](https://github.com/chaunce/repor/actions)
 
-`repor` is a framework for aggregating data about
+`ActiveReporter` is a framework for aggregating data about
 [Rails](http://rubyonrails.org) models backed by
 [PostgreSQL](http://www.postgresql.org), [MySQL](https://www.mysql.com), or
 [SQLite](https://www.sqlite.org) databases.  It's designed to be flexible
 enough to accommodate many use cases, but opinionated enough to avoid the need
 for boilerplate.
+
+`ActiveReporter` is based on the `repor` gem by Andrew Ross https://github.com/asross/repor
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -29,10 +31,10 @@ for boilerplate.
 
 ## Basic usage
 
-Here are some examples of how to define, run, and serialize a `Repor::Report`:
+Here are some examples of how to define, run, and serialize a `ActiveReporter::Report`:
 
 ```ruby
-class PostReport < Repor::Report
+class PostReport < ActiveReporter::Report
   report_on :Post
 
   category_dimension :author, relation: ->(r) { r.joins(:author) },
@@ -110,12 +112,12 @@ puts report.data
 #   ]
 # }]
 
-csv_serializer = Repor::Serializer::Csv.new(report)
+csv_serializer = ActiveReporter::Serializer::Csv.new(report)
 puts csv_serializer.csv_text
 
 # => csv text string
 
-chart_serializer = Repor::Serializer::Highcharts.new(report)
+chart_serializer = ActiveReporter::Serializer::Highcharts.new(report)
 puts chart_serializer.highcharts_options
 
 # => highcharts options hash
@@ -142,7 +144,7 @@ See below for more details about dimension-specific parameters.
 
 ### Base relation
 
-A `Repor::Report` either needs to know what `ActiveRecord` class it is reporting
+A `ActiveReporter::Report` either needs to know what `ActiveRecord` class it is reporting
 on, or it needs to know a `table_name` and a `base_relation`.
 
 You can specify an `ActiveRecord` class by calling the `report_on` class method
@@ -153,7 +155,7 @@ By default, it will try to infer an `ActiveRecord` class from the report class
 name by dropping `/Report$/` and constantizing.
 
 ```ruby
-class PostReport < Repor::Report
+class PostReport < ActiveReporter::Report
 end
 
 PostReport.new.table_name
@@ -162,7 +164,7 @@ PostReport.new.table_name
 PostReport.new.base_relation
 # => Post.all
 
-class PostStructuralReport < Repor::Report
+class PostStructuralReport < ActiveReporter::Report
   report_on :Post
 
   def base_relation
@@ -183,7 +185,7 @@ most columns to dimensions, and if the column in question is for a `belongs_to`
 association, will even try to join and report on the association's name:
 
 ```ruby
-class PostReport < Repor::Report
+class PostReport < ActiveReporter::Report
   autoreport_on Post
 end
 
@@ -195,11 +197,11 @@ PostReport.new.dimensions[:author].expression
 ```
 
 Autoreport behavior can be customized by overriding certain methods; see the
-`Repor::Report` code for more information.
+`ActiveReporter::Report` code for more information.
 
 ### Dimensions (x-axes)
 
-You define dimensions on your `Repor::Report` to represent attributes of your
+You define dimensions on your `ActiveReporter::Report` to represent attributes of your
 data you're interested in. Dimensions objects can filter or group your relation
 by a SQL expression, and accept/return simple Ruby values of various types.
 
@@ -214,7 +216,7 @@ There are several built-in types of dimensions:
 You define dimensions in your report class like this:
 
 ```ruby
-class PostReport < Repor::Report
+class PostReport < ActiveReporter::Report
   category_dimension :status
   number_dimension :author_rating, expression: 'users.rating',
     relation: ->(r) { r.joins(:author) }
@@ -285,14 +287,14 @@ default to using a sensical increment of time given the domain; you can
 customize this by overriding methods in those classes.
 
 Note that when you inspect `report.data` after grouping by a bin dimension, you
-will see the dimension values are actually `Repor::Bin::Base` objects,
+will see the dimension values are actually `ActiveReporter::Bin::Base` objects,
 which respond to `min`, `max`, and various json/Hash methods. These are meant
 to provide a common interface for the different types of bins (double-bounded,
 unbounded on one side, null) and handle mapping between SQL and Ruby
 representations of their values. You may find bin objects useful in working
 with report data, and they can also be customized.
 
-If you want to change how `repor` maps SQL values to the dimension values of
+If you want to change how `ActiveReporter` maps SQL values to the dimension values of
 `report.data`, you can override `YourDimension#sanitize_sql_value`.
 
 #### Customizing dimensions
@@ -300,7 +302,7 @@ If you want to change how `repor` maps SQL values to the dimension values of
 You can define custom dimension classes by inheriting from one of the existing
 ones:
 ```ruby
-class CaseInsensitiveCategoryDimension < Repor::Dimension::Category
+class CaseInsensitiveCategoryDimension < ActiveReporter::Dimension::Category
   def order_expression
     "UPPER(#{super})"
   end
@@ -309,7 +311,7 @@ end
 
 You can then use it in the definition of a report class like this:
 ```ruby
-class UserReport < Repor::Report
+class UserReport < ActiveReporter::Report
   dimension :last_name, CaseInsensitiveCategoryDimension
 end
 ```
@@ -317,14 +319,14 @@ end
 Common methods to override include `order_expression`, `sanitize_sql_value`,
 `validate_params!`, `group_values`, and `default_bin_width`.
 
-Note that if you inherit directly from  `Repor::Dimension::Base`, you
+Note that if you inherit directly from  `ActiveReporter::Dimension::Base`, you
 will need to implement (at a minimum) `filter(relation)`, `group(relation)`, and
 `group_values`. See the base dimension class for more details.
 
 If you want custom behavior for bins, you can define `Set` and `Table`
 classes nested inside your custom dimension classes (or override methods
-directly on `Repor::Dimension::Bin::Set(Table)`,
-`Repor::Dimension::Time::Set(Table)`, etc). See the relevant classes for more
+directly on `ActiveReporter::Dimension::Bin::Set(Table)`,
+`ActiveReporter::Dimension::Time::Set(Table)`, etc). See the relevant classes for more
 details.
 
 ### Aggregators (y-axes)
@@ -367,7 +369,7 @@ You can also define your own aggregator type if none of the existing ones meet
 your needs:
 
 ```ruby
-class LengthAggregator < Repor::Aggregators::BaseAggregator
+class LengthAggregator < ActiveReporter::Aggregators::BaseAggregator
   def aggregate(grouped_relation)
     # check out the other aggregators for examples of what to do here.
   end
@@ -408,7 +410,7 @@ If you have suggestions for how to make any part of this library better, or if
 you want to contribute extra dimensions, aggregators, serializers, please
 submit them in a pull request (with test coverage).
 
-To work on developing `repor`, you will need to have Ruby and PostgreSQL,
+To work on developing `ActiveReporter`, you will need to have Ruby and PostgreSQL,
 MySQL, or SQLite3 installed. Then clone the repository and run:
 ```sh
 bundle install

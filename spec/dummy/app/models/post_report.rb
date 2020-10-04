@@ -1,4 +1,4 @@
-class PostReport < Repor::Report
+class PostReport < ActiveReporter::Report
   report_on :post
   count_aggregator :count
   sum_aggregator :total_likes, attribute: :likes
