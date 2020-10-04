@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    repor (0.5.7)
+    active_reporter (0.5.7)
       deeply_enumerable (>= 0.9.3, < 2.0)
       rails (>= 5.1, < 6.1)
 
@@ -96,7 +96,7 @@ GEM
     mini_portile2 (2.4.0)
     minitest (5.14.1)
     mysql2 (0.5.3)
-    nio4r (2.5.3)
+    nio4r (2.5.4)
     nokogiri (1.10.9)
       mini_portile2 (~> 2.4.0)
     pg (1.2.3)
@@ -175,13 +175,13 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  active_reporter!
   database_cleaner (~> 1.6)
   factory_bot_rails (~> 4.8)
   faker (~> 1.6)
   mysql2 (~> 0.5)
   pg (~> 1)
   pry (~> 0.11)
-  repor!
   rspec-rails (~> 3)
   simplecov (~> 0.17)
   sqlite3 (~> 1.3)

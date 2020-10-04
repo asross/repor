@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'more complicated case' do
   let(:report_model) do
-    Class.new(Repor::Report) do
+    Class.new(ActiveReporter::Report) do
       report_on :Post
 
       time_dimension :published_at
@@ -254,7 +254,7 @@ describe 'more complicated case' do
       ] }
     ]
 
-    if Repor.database_type == :postgres
+    if ActiveReporter.database_type == :postgres
       expect_equal data_by(:author, nulls_last: true), [
         { key: joyce.name, values: [
           { key: :count, value: 4 },

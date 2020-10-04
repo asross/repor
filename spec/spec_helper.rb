@@ -5,17 +5,17 @@ require 'simplecov'
 SimpleCov.start do
   add_filter '/spec/'
 
-  add_group 'Report', ['lib/repor.rb', 'lib/repor/report', 'lib/repor/invalid_params_error.rb', 'lib/repor/version.rb']
+  add_group 'Report', ['lib/active_reporter.rb', 'lib/active_reporter/report', 'lib/active_reporter/invalid_params_error.rb', 'lib/active_reporter/version.rb']
 
-  add_group 'Aggregators', 'lib/repor/aggregator'
-  add_group 'Calculators', 'lib/repor/calculator'
-  add_group 'Trackers', 'lib/repor/tracker'
+  add_group 'Aggregators', 'lib/active_reporter/aggregator'
+  add_group 'Calculators', 'lib/active_reporter/calculator'
+  add_group 'Trackers', 'lib/active_reporter/tracker'
 
-  add_group 'Dimensions', 'lib/repor/dimension'
+  add_group 'Dimensions', 'lib/active_reporter/dimension'
 
-  add_group 'Serializers', 'lib/repor/serializer'
+  add_group 'Serializers', 'lib/active_reporter/serializer'
 
-  add_group 'Tasks', 'lib/repor/tasks'
+  add_group 'Tasks', 'lib/active_reporter/tasks'
 
   add_group "Long files" do |src_file| src_file.lines.count > 100 end
   add_group "Short files" do |src_file| src_file.lines.count < 5 end
