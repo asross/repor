@@ -4,7 +4,7 @@
   <div class='pure-u-12-24'>
     <h2>Form</h2>
     <%= form_tag request.fullpath, method: 'get', id: 'report-form', autocomplete: 'off' do %>
-      <%= Repor::Serializers::FormFieldSerializer.new(@report).html_fields %><br>
+      <%= ActiveReporter::Serializer::FormField.new(@report).html_fields %><br>
       <label><%= check_box_tag 'post_report[sort_desc]', "1", @report.params[:sort_desc].present? %> Sort Desc?</label><br>
       <label><%= check_box_tag 'post_report[nulls_last]', "1", @report.params[:nulls_last].present? %> Nulls Last?</label><br>
       <%= submit_tag 'Run report', class: 'pure-button pure-button-primary' %>
@@ -20,7 +20,7 @@
   </div>
 </div>
 
-<% table = Repor::Serializers::TableSerializer.new(@report) %>
+<% table = ActiveReporter::Serializer::Table.new(@report) %>
 <div class='pure-g'>
   <div class='pure-u-24-24'>
     <h2>Table</h2>
@@ -39,7 +39,7 @@
   </div>
 </div>
 
-<% chart = Repor::Serializers::HighchartsSerializer.new(@report) %>
+<% chart = ActiveReporter::Serializer::Highcharts.new(@report) %>
 <script>
 $(function() {
   /* most of the highcharts options come straight from the exporter */
