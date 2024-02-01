@@ -1,4 +1,6 @@
-# Repor [![Build Status](https://api.travis-ci.org/asross/repor.svg?branch=master)](https://travis-ci.org/asross/repor)
+# Note: this gem is no longer maintained, see [this awesome fork by `chaunce`](https://github.com/chaunce/active_reporter) instead!
+
+# Repor 
 
 `repor` is a framework for aggregating data about
 [Rails](http://rubyonrails.org) models backed by
